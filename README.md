@@ -27,7 +27,7 @@ D(x(i)) = output of D when fed the real training example, the probability it giv
 
 D(G(z(i))) = output of D when fed the generated example, the probability it gives the fake example of being real. D wants this to be as low as possible, while G wants it to be as high as possible.
 
-## The Loss Functions
+## The Cost Function
 
 Loss(D) = -(1/m) ∑ [ log D(x(i)) + log (1 - D(G(z(i))))]
 
@@ -38,12 +38,12 @@ Loss(G) = (1/m) ∑ log(1 - D(G(z(i))))
 
 The authors found the following architecture changes to be important for successful training:
 
-* They used all-convolutional nets, with no spatial pooling functions such as maxpool.
+* All-convolutional nets, with no spatial pooling functions such as maxpool.
 * They eliminated the fully connected layers often placed on top of convolutional layers. Only the input and output layers are not convolutional.
-* Used batch normalization at every layer except the generator output and the discriminator input layers.
-* Use ReLU activation for all layers in the generator except the output layer, which uses tanh.
-* Use LeakyReLU activation in the discriminator for all layers, with a leak-slope of 0.2.
-* Used the Adam optimizer, with the momentum parameter B1 set to 0.5, and a learning rate of 0.0002. 
+* Batch normalization at every layer except the generator output and the discriminator input layers.
+* ReLU activation for all layers in the generator except the output layer, which uses tanh. This necessitates a pre-processing step to scale the training images to [-1, 1], the range of tanh, so that the range of outputs from G will match the real examples.
+* LeakyReLU activation in the discriminator for all layers, with a leak-slope of 0.2.
+* They used the Adam optimizer, with the momentum parameter B1 set to 0.5, and a learning rate of 0.0002. 
 
 This implementation uses all of the above.
 
