@@ -43,7 +43,7 @@ def data_tensor(numpy_data):
 
 
 # Load data
-numpy_data = load_data()
+""" numpy_data = load_data()
 X = data_tensor(numpy_data)
 print("done loading data!")
 
@@ -51,50 +51,65 @@ sess = tf.Session()
 
 d = sess.run(X)
 print("data shape:")
-print(d.shape)
+print(d.shape) """
 
 
 
 
 # Generator
-'''
-Takes z as an argument, a 100-length vector.
-Returns an operation that creates an image of shape [None, 32, 32, 1]
+def generator(Z):
+    '''
+    Takes Z as an argument, a [M, 100] tensor of random numbers.
+    Returns an operation that creates an image of shape [None, 32, 32, 1]
+    '''
 
-Input FC
-    4 * 4 * 256, batch norm, ReLU
-    Reshape - [None, 4, 4, 256]
+    # Input Layer
+    input_fc = tf.contrib.layers.dense(
+        input_norm, 
+        num_outputs=4*4*256, 
+        activation=tf.nn.relu)
+    input_reshape = tf.reshape(input_fc, [None, 4, 4, 256])
 
-Deconv1 
-    32 filters
-    kernal_size = [5,5]
-    stride = [2,2]
-    padding = 'SAME'
-    Batch Norm
-    ReLU
+    # Layer 1
+    norm_1 = tf.layers.batch_normalization(input_reshape)
+    deconv_1 = tf.layers.conv2d_transpose(
+        norm_1, 
+        filters=32, 
+        kernel_size=[5,5], 
+        strides=[2,2], 
+        padding='SAME',
+        activation=tf.nn.relu)
 
-Deconv2
-    32 filters
-    kernal_size = [5,5]
-    stride = [2,2]
-    padding = 'SAME'
-    Batch Norm
-    ReLU
+    # Layer 2
+    norm_2 = tf.layers.batch_normalization(deconv_1)
+    deconv_2 = tf.layers.conv2d_transpose(
+        norm_2, 
+        filters=32, 
+        kernel_size=[5,5], 
+        strides=[2,2], 
+        padding='SAME', 
+        activation=tf.nn.relu)
 
-Deconv3
-    16 filters
-    kernal_size = [5,5]
-    stride = [2,2]
-    padding = 'SAME'
-    Batch Norm
-    ReLU
+    # Layer 3
+    norm_3 = tf.layers.batch_normalization(deconv_2)
+    deconv_3 = tf.layers.conv2d_transpose(
+        norm_3,
+        filters=16, 
+        kernel_size=[5,5], 
+        strides=[2,2], 
+        padding='SAME', 
+        activation=tf.nn.relu)
 
-Output
-    1 filter
-    kernal_size = [32, 32]
-    padding = 'SAME'
-    Tanh
-'''
+    # Output Layer
+    output_norm = tf.layers.batch_normalization(deconv_3)
+    output = tf.layers.conv2d_transpose(
+        output_norm, 
+        kernel_size=[32,32],
+        padding='SAME',
+        activation=tf.nn.tanh)
+
+    return output
+
 
 # Discriminator
 '''
