@@ -10,11 +10,36 @@ Issues:
 '''
 
 # Load data
+'''
+Downloads data into ~/.keras/datasets/mnist.npz, if its not there.
+Returns a tuple of np arrays ((x_train, y_train), (x_test, y_test))
+We do not need the labels, so we will gather all examples x.
+'''
+mnist = tf.keras.datasets.mnist.load_data()
+x_train = mnist[0][0] # [60000, 28, 28]
+x_test = mnist[1][0] # [10000, 28, 28]
+x = np.zeros((70000, 28, 28))
+x[0:60000, :, :] = x_train
+x[60000:, :, :] = x_test
+
 
 # Pre-processing
 '''
-Scale training images to the range of the tanh function, [-1, 1]
+The data is currently in a range [0, 255].
+Transform data to have a range [-1, 1].
+We do this to match the range of tanh, the activation on the generator's output layer.
 '''
+x = x / 128.
+x = x - 1.
+
+
+# Setup
+'''
+We now have a numpy array of shape (70000, 28, 28). 
+Turn it into a tensor X.
+'''
+X = tf.constant(x)
+
 
 # Generator
 '''
