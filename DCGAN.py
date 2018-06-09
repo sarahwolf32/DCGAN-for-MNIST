@@ -4,41 +4,56 @@ import numpy as np
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
-
-Issues:
-    - Tutorial seems to expect MNIST images to be 32x32, but I think they are 28x28.
 '''
+
+
+def load_data():
+
+    # Downloads data into ~/.keras/datasets/mnist.npz, if its not there.
+    # Raw data is a tuple of np arrays ((x_train, y_train), (x_test, y_test))
+    mnist = tf.keras.datasets.mnist.load_data()
+
+    # We do not need the labels, so we will gather all examples x.
+    # Return a numpy array of shape (M, 28, 28)
+    x_train, x_test = mnist[0][0], mnist[1][0]
+    num_train, num_test = x_train.shape[0], x_test.shape[0]
+    M = num_train + num_test
+    x_all = np.zeros((M, 28, 28))
+    x_all[:num_train, :, :] = x_train
+    x_all[num_train:, :, :] = x_test
+    return x_all
+
+
+def data_tensor(numpy_data):
+
+    # Pad the images to make them 32x32, a more convenient size for this model architecture.
+    x = np.zeros((numpy_data.shape[0], 32, 32))
+    x[:, 2:30, 2:30] = numpy_data
+
+    # The data is currently in a range [0, 255].
+    # Transform data to have a range [-1, 1].
+    # We do this to match the range of tanh, the activation on the generator's output layer.
+    x = x / 128.
+    x = x - 1.
+
+    # Turn numpy array into a tensor X of shape [M, 32, 32, 1].
+    X = tf.constant(x)
+    X = tf.reshape(X, [-1, 32, 32, 1])
+    return X
+
 
 # Load data
-'''
-Downloads data into ~/.keras/datasets/mnist.npz, if its not there.
-Returns a tuple of np arrays ((x_train, y_train), (x_test, y_test))
-We do not need the labels, so we will gather all examples x.
-'''
-mnist = tf.keras.datasets.mnist.load_data()
-x_train = mnist[0][0] # [60000, 28, 28]
-x_test = mnist[1][0] # [10000, 28, 28]
-x = np.zeros((70000, 28, 28))
-x[0:60000, :, :] = x_train
-x[60000:, :, :] = x_test
+numpy_data = load_data()
+X = data_tensor(numpy_data)
+print("done loading data!")
+
+sess = tf.Session()
+
+d = sess.run(X)
+print("data shape:")
+print(d.shape)
 
 
-# Pre-processing
-'''
-The data is currently in a range [0, 255].
-Transform data to have a range [-1, 1].
-We do this to match the range of tanh, the activation on the generator's output layer.
-'''
-x = x / 128.
-x = x - 1.
-
-
-# Setup
-'''
-We now have a numpy array of shape (70000, 28, 28). 
-Turn it into a tensor X.
-'''
-X = tf.constant(x)
 
 
 # Generator
