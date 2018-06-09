@@ -42,33 +42,18 @@ def data_tensor(numpy_data):
     return X
 
 
-# Load data
-""" numpy_data = load_data()
-X = data_tensor(numpy_data)
-print("done loading data!")
-
-sess = tf.Session()
-
-d = sess.run(X)
-print("data shape:")
-print(d.shape) """
-
-
-
-
-# Generator
 def generator(Z):
     '''
-    Takes Z as an argument, a [M, 100] tensor of random numbers.
+    Takes an argument Z, a [M, 100] tensor of random numbers.
     Returns an operation that creates an image of shape [None, 32, 32, 1]
     '''
 
     # Input Layer
-    input_fc = tf.contrib.layers.dense(
-        input_norm, 
-        num_outputs=4*4*256, 
+    input_fc = tf.layers.dense(
+        Z, 
+        4*4*256, 
         activation=tf.nn.relu)
-    input_reshape = tf.reshape(input_fc, [None, 4, 4, 256])
+    input_reshape = tf.reshape(input_fc, [-1, 4, 4, 256])
 
     # Layer 1
     norm_1 = tf.layers.batch_normalization(input_reshape)
@@ -104,11 +89,47 @@ def generator(Z):
     output_norm = tf.layers.batch_normalization(deconv_3)
     output = tf.layers.conv2d_transpose(
         output_norm, 
+        filters=1,
         kernel_size=[32,32],
         padding='SAME',
         activation=tf.nn.tanh)
 
+    # Generated images of shape [M, 32, 32, 1]
     return output
+
+
+# Main
+'''
+numpy_data = load_data()
+X = data_tensor(numpy_data)
+'''
+
+# Test generator
+    # create a [M, 100] Z tf.constant
+    # run it through the generator
+    # output should be of the correct shape
+M = 5
+Z = tf.random_uniform([M, 100])
+G = generator(Z)
+init = tf.global_variables_initializer()
+with tf.Session() as sess:
+    sess.run(init)
+    out = sess.run(G)
+    print("got an out!")
+    print("out.shape:")
+    print(out.shape)
+    print(out)
+
+
+""" 
+print("done loading data!")
+
+sess = tf.Session()
+
+d = sess.run(X)
+print("data shape:")
+print(d.shape) 
+"""
 
 
 # Discriminator
