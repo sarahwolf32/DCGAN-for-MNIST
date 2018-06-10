@@ -4,6 +4,12 @@ import numpy as np
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
+
+Issues:
+    - Slightly unsure if I'm putting the batch norm layers in the right place.
+        - For a batch_norm to belong to a 'layer', should it go at the beginning, 
+        between the linearity and activation, or at the end?
+        - Every layer except the generator output and the discriminator input.
 '''
 
 
@@ -45,14 +51,11 @@ def data_tensor(numpy_data):
 def generator(Z):
     '''
     Takes an argument Z, a [M, 100] tensor of random numbers.
-    Returns an operation that creates an image of shape [None, 32, 32, 1]
+    Returns an operation that creates a generated image of shape [None, 32, 32, 1]
     '''
 
     # Input Layer
-    input_fc = tf.layers.dense(
-        Z, 
-        4*4*256, 
-        activation=tf.nn.relu)
+    input_fc = tf.layers.dense(Z, 4*4*256, activation=tf.nn.relu)
     input_reshape = tf.reshape(input_fc, [-1, 4, 4, 256])
 
     # Layer 1
@@ -98,23 +101,80 @@ def generator(Z):
     return output
 
 
+# Discriminator
+def discriminator(images):
+    '''
+    Takes an image as an argument [None, 32, 32, 1].
+    Returns an operation that gives the probability of that image being 'real' [None, 1]
+    '''
+
+    # Layer 1 => [M, 16, 16, 16]
+    conv_1 = tf.layers.conv2d(
+        images, 
+        filters=16, 
+        kernel_size=[4,4], 
+        strides=[2,2], 
+        padding='SAME', 
+        activation=tf.nn.leaky_relu)
+
+    # Layer 2 => [M, 8, 8, 32]
+    norm_2 = tf.layers.batch_normalization(conv_1) 
+    conv_2 = tf.layers.conv2d(
+        norm_2, 
+        filters=32, 
+        kernel_size=[4,4], 
+        strides=[2,2], 
+        padding='SAME', 
+        activation=tf.nn.leaky_relu)
+
+    # Layer 3 => [M, 4, 4, 64]
+    norm_3 = tf.layers.batch_normalization(conv_2)
+    conv_3 = tf.layers.conv2d(
+        norm_3, 
+        filters=64, 
+        kernel_size=[4,4], 
+        strides=[2,2], 
+        padding='SAME', 
+        activation=tf.nn.leaky_relu)
+
+    # Output layer
+    output_norm = tf.layers.batch_normalization(conv_3)
+    output_flat = tf.layers.flatten(output_norm) # => [M, 4*4*64]
+    output = tf.layers.dense(output_flat, units=1, activation=tf.nn.sigmoid) # => [M, 1]
+
+    return output
+
+
+# Training
+'''
+Loss(D) = -(1/m) SUM_OVER_M[ log(D(x)) + log(1 - D(G(z)))]
+Loss(G) = (1/m) SUM_OVER_M[ log(1 - D(G(z)))]
+
+Mini-batch size 128
+Mini-batch stochastic gradient descent
+Initialize weights from zero-centered normal distribution, 0.02 standard deviation
+AdamOptimizer => learning_rate = 0.0002, B1 = 0.5
+'''
+
+
 # Main
 '''
 numpy_data = load_data()
 X = data_tensor(numpy_data)
 '''
 
-# Test generator
-    # create a [M, 100] Z tf.constant
-    # run it through the generator
+# Test discriminator
+    # create a [M, 32, 32, 1] constant
+    # run it through the discriminator
     # output should be of the correct shape
+print("testing discriminator!")
 M = 5
-Z = tf.random_uniform([M, 100])
-G = generator(Z)
+images = tf.random_uniform([M, 32, 32, 1])
+D = discriminator(images)
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
-    out = sess.run(G)
+    out = sess.run(D)
     print("got an out!")
     print("out.shape:")
     print(out.shape)
@@ -130,50 +190,3 @@ d = sess.run(X)
 print("data shape:")
 print(d.shape) 
 """
-
-
-# Discriminator
-'''
-Takes an image as an argument [None, 32, 32, 1].
-Returns an operation that gives the probability of that image being 'real' [None, 1]
-
-Conv1
-    16 filters
-    kernal_size = [4, 4]
-    stride = [2, 2]
-    padding = 'SAME'
-    LeakyReLU, slope = 0.2
-
-Conv2
-    32 filters
-    kernal_size = [4, 4]
-    stride = [2, 2]
-    padding = 'SAME'
-    Batch Norm
-    LeakyReLU, slope = 0.2
-
-Conv3
-    64 filters
-    kernal_size = [4, 4]
-    stride = [2, 2]
-    padding = 'SAME'
-    Batch Norm
-    LeakyReLU, slope = 0.2
-
-Output
-    Flatten
-    FC - 1 node
-    Sigmoid
-
-'''
-
-# Training
-'''
-Loss(D) = -(1/m) SUM_OVER_M[ log(D(x)) + log(1 - D(G(z)))]
-Loss(G) = (1/m) SUM_OVER_M[ log(1 - D(G(z)))]
-
-Mini-batch size 128
-Mini-batch stochastic gradient descent
-Initialize weights from zero-centered normal distribution, 0.02 standard deviation
-AdamOptimizer => learning_rate = 0.0002, B1 = 0.5
-'''
