@@ -4,9 +4,6 @@ import numpy as np
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
-
-Issue:
-    - Weird error => You need to set reuse=True on everything the second time you call the discriminator
 '''
 
 GENERATOR_SCOPE = 'generator'
@@ -243,7 +240,8 @@ with tf.Session() as sess:
 
             # train
             images = sess.run(next_batch)
-            Z = sess.run(tf.random_uniform([images.shape[0], 100])) # creating this every time is too slow
+            Z = np.random.uniform(-1.0, 1.0, size=[images.shape[0], 100])
+
             print("batch " + str(i) + ": images_shape = " + str(images.shape) + ", Z_shape = " + str(Z.shape))
 
 
