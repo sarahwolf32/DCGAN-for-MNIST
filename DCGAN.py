@@ -4,12 +4,6 @@ import numpy as np
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
-
-Issues:
-    - Slightly unsure if I'm putting the batch norm layers in the right place.
-        - For a batch_norm to belong to a 'layer', should it go at the beginning, 
-        between the linearity and activation, or at the end?
-        - Every layer except the generator output and the discriminator input.
 '''
 
 
@@ -55,43 +49,48 @@ def generator(Z):
     '''
 
     # Input Layer
-    input_fc = tf.layers.dense(Z, 4*4*256, activation=tf.nn.relu)
-    input_reshape = tf.reshape(input_fc, [-1, 4, 4, 256])
+    input_fc = tf.layers.dense(Z, 4*4*256, activation=None)
+    input_norm = tf.layers.batch_normalization(input_fc)
+    input_relu = tf.nn.relu(input_norm)
+    input_reshape = tf.reshape(input_relu, [-1, 4, 4, 256])
 
     # Layer 1
-    norm_1 = tf.layers.batch_normalization(input_reshape)
     deconv_1 = tf.layers.conv2d_transpose(
-        norm_1, 
+        input_reshape, 
         filters=32, 
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME',
-        activation=tf.nn.relu)
+        activation=None)
+    norm_1 = tf.layers.batch_normalization(deconv_1)
+    relu_1 = tf.nn.relu(norm_1)
 
     # Layer 2
-    norm_2 = tf.layers.batch_normalization(deconv_1)
     deconv_2 = tf.layers.conv2d_transpose(
-        norm_2, 
+        relu_1, 
         filters=32, 
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME', 
-        activation=tf.nn.relu)
+        activation=None)
+    norm_2 = tf.layers.batch_normalization(deconv_2)
+    relu_2 = tf.nn.relu(norm_2)
 
     # Layer 3
-    norm_3 = tf.layers.batch_normalization(deconv_2)
     deconv_3 = tf.layers.conv2d_transpose(
-        norm_3,
+        relu_2,
         filters=16, 
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME', 
-        activation=tf.nn.relu)
+        activation=None)
+    norm_3 = tf.layers.batch_normalization(deconv_3)
+    relu_3 = tf.nn.relu(norm_3)
 
     # Output Layer
-    output_norm = tf.layers.batch_normalization(deconv_3)
+    # No batch norm
     output = tf.layers.conv2d_transpose(
-        output_norm, 
+        relu_3, 
         filters=1,
         kernel_size=[32,32],
         padding='SAME',
@@ -109,6 +108,7 @@ def discriminator(images):
     '''
 
     # Layer 1 => [M, 16, 16, 16]
+    # No batch norm
     conv_1 = tf.layers.conv2d(
         images, 
         filters=16, 
@@ -118,29 +118,32 @@ def discriminator(images):
         activation=tf.nn.leaky_relu)
 
     # Layer 2 => [M, 8, 8, 32]
-    norm_2 = tf.layers.batch_normalization(conv_1) 
     conv_2 = tf.layers.conv2d(
-        norm_2, 
+        conv_1, 
         filters=32, 
         kernel_size=[4,4], 
         strides=[2,2], 
         padding='SAME', 
-        activation=tf.nn.leaky_relu)
+        activation=None)
+    norm_2 = tf.layers.batch_normalization(conv_2)
+    lrelu_2 = tf.nn.leaky_relu(norm_2)
 
     # Layer 3 => [M, 4, 4, 64]
-    norm_3 = tf.layers.batch_normalization(conv_2)
     conv_3 = tf.layers.conv2d(
-        norm_3, 
+        lrelu_2, 
         filters=64, 
         kernel_size=[4,4], 
         strides=[2,2], 
         padding='SAME', 
-        activation=tf.nn.leaky_relu)
+        activation=None)
+    norm_3 = tf.layers.batch_normalization(conv_3)
+    lrelu_3 = tf.nn.leaky_relu(norm_3)
 
     # Output layer
-    output_norm = tf.layers.batch_normalization(conv_3)
-    output_flat = tf.layers.flatten(output_norm) # => [M, 4*4*64]
-    output = tf.layers.dense(output_flat, units=1, activation=tf.nn.sigmoid) # => [M, 1]
+    output_flat = tf.layers.flatten(lrelu_3) # => [M, 4*4*64]
+    output_fc = tf.layers.dense(output_flat, units=1, activation=None) 
+    output_norm = tf.layers.batch_normalization(output_fc)
+    output = tf.nn.sigmoid(output_norm)  # => [M, 1]
 
     return output
 
@@ -163,6 +166,22 @@ numpy_data = load_data()
 X = data_tensor(numpy_data)
 '''
 
+# Test generator
+    # create a [M, 100] constant
+    # run it through the generator
+    # output should be correct shape
+""" print ("testing generator!")
+M = 5
+Z = tf.random_uniform([M, 100])
+G = generator(Z)
+init = tf.global_variables_initializer()
+sess = tf.Session()
+sess.run(init)
+out = sess.run(G)
+print("got an out for G!")
+print("should be of shape [M, 32, 32, 1]")
+print("real shape: " + str(out.shape)) """
+
 # Test discriminator
     # create a [M, 32, 32, 1] constant
     # run it through the discriminator
@@ -175,10 +194,10 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
     out = sess.run(D)
-    print("got an out!")
+    print("got an out! Should be shape [M, 1]")
     print("out.shape:")
     print(out.shape)
-    print(out)
+    print(out) 
 
 
 """ 
