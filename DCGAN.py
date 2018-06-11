@@ -4,7 +4,13 @@ import numpy as np
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
+
+Issue:
+    - Weird error => You need to set reuse=True on everything the second time you call the discriminator
 '''
+
+GENERATOR_SCOPE = 'generator'
+DISCRIMINATOR_SCOPE = 'dis'
 
 
 def load_data():
@@ -41,6 +47,18 @@ def data_tensor(numpy_data):
     X = tf.reshape(X, [-1, 32, 32, 1])
     return X
 
+def load_dataset():
+    numpy_data = load_data()
+    np.random.shuffle(numpy_data)
+
+    batch_size = 128
+    num_batches = int(np.ceil(numpy_data.shape[0] / float(batch_size)))
+
+    X = data_tensor(numpy_data)
+    dataset = tf.data.Dataset.from_tensor_slices(X)
+    dataset = dataset.batch(batch_size)
+    return dataset, num_batches
+
 
 def generator(Z, initializer):
     '''
@@ -48,104 +66,119 @@ def generator(Z, initializer):
     Returns an operation that creates a generated image of shape [None, 32, 32, 1]
     '''
 
-    # Input Layer
-    input_fc = tf.layers.dense(Z, 4*4*256, kernel_initializer=initializer)
-    input_norm = tf.layers.batch_normalization(input_fc)
-    input_relu = tf.nn.relu(input_norm)
-    input_reshape = tf.reshape(input_relu, [-1, 4, 4, 256])
+    with tf.variable_scope(GENERATOR_SCOPE):
 
-    # Layer 1
-    deconv_1 = tf.layers.conv2d_transpose(
-        input_reshape, 
-        filters=32, 
-        kernel_size=[5,5], 
-        strides=[2,2], 
-        padding='SAME',
-        kernel_initializer=initializer)
-    norm_1 = tf.layers.batch_normalization(deconv_1)
-    relu_1 = tf.nn.relu(norm_1)
+        # Input Layer
+        input_fc = tf.layers.dense(Z, 4*4*256, kernel_initializer=initializer, name='input')
+        input_norm = tf.layers.batch_normalization(input_fc)
+        input_relu = tf.nn.relu(input_norm)
+        input_reshape = tf.reshape(input_relu, [-1, 4, 4, 256])
 
-    # Layer 2
-    deconv_2 = tf.layers.conv2d_transpose(
-        relu_1, 
-        filters=32, 
-        kernel_size=[5,5], 
-        strides=[2,2], 
-        padding='SAME', 
-        kernel_initializer=initializer)
-    norm_2 = tf.layers.batch_normalization(deconv_2)
-    relu_2 = tf.nn.relu(norm_2)
+        # Layer 1
+        deconv_1 = tf.layers.conv2d_transpose(
+            input_reshape, 
+            filters=32, 
+            kernel_size=[5,5], 
+            strides=[2,2], 
+            padding='SAME',
+            kernel_initializer=initializer, 
+            name='layer1')
+        norm_1 = tf.layers.batch_normalization(deconv_1)
+        relu_1 = tf.nn.relu(norm_1)
 
-    # Layer 3
-    deconv_3 = tf.layers.conv2d_transpose(
-        relu_2,
-        filters=16, 
-        kernel_size=[5,5], 
-        strides=[2,2], 
-        padding='SAME', 
-        kernel_initializer=initializer)
-    norm_3 = tf.layers.batch_normalization(deconv_3)
-    relu_3 = tf.nn.relu(norm_3)
+        # Layer 2
+        deconv_2 = tf.layers.conv2d_transpose(
+            relu_1, 
+            filters=32, 
+            kernel_size=[5,5], 
+            strides=[2,2], 
+            padding='SAME', 
+            kernel_initializer=initializer,
+            name='layer2')
+        norm_2 = tf.layers.batch_normalization(deconv_2)
+        relu_2 = tf.nn.relu(norm_2)
 
-    # Output Layer
-    output = tf.layers.conv2d_transpose(
-        relu_3, 
-        filters=1,
-        kernel_size=[32,32],
-        padding='SAME',
-        activation=tf.nn.tanh,
-        kernel_initializer=initializer)
+        # Layer 3
+        deconv_3 = tf.layers.conv2d_transpose(
+            relu_2,
+            filters=16, 
+            kernel_size=[5,5], 
+            strides=[2,2], 
+            padding='SAME', 
+            kernel_initializer=initializer,
+            name='layer3')
+        norm_3 = tf.layers.batch_normalization(deconv_3)
+        relu_3 = tf.nn.relu(norm_3)
 
-    # Generated images of shape [M, 32, 32, 1]
-    return output
+        # Output Layer
+        output = tf.layers.conv2d_transpose(
+            relu_3, 
+            filters=1,
+            kernel_size=[32,32],
+            padding='SAME',
+            activation=tf.nn.tanh,
+            kernel_initializer=initializer,
+            name='output')
+
+        # Generated images of shape [M, 32, 32, 1]
+        return output
 
 
 # Discriminator
-def discriminator(images, initializer):
+def discriminator(images, initializer, reuse):
     '''
     Takes an image as an argument [None, 32, 32, 1].
     Returns an operation that gives the probability of that image being 'real' [None, 1]
     '''
 
-    # Layer 1 => [M, 16, 16, 16]
-    conv_1 = tf.layers.conv2d(
-        images, 
-        filters=16, 
-        kernel_size=[4,4], 
-        strides=[2,2], 
-        padding='SAME', 
-        activation=tf.nn.leaky_relu,
-        kernel_initializer=initializer)
+    with tf.variable_scope(DISCRIMINATOR_SCOPE, reuse=reuse):
 
-    # Layer 2 => [M, 8, 8, 32]
-    conv_2 = tf.layers.conv2d(
-        conv_1, 
-        filters=32, 
-        kernel_size=[4,4], 
-        strides=[2,2], 
-        padding='SAME', 
-        kernel_initializer=initializer)
-    norm_2 = tf.layers.batch_normalization(conv_2)
-    lrelu_2 = tf.nn.leaky_relu(norm_2)
+        # Layer 1 => [M, 16, 16, 16]
+        conv_1 = tf.layers.conv2d(
+            images, 
+            filters=16, 
+            kernel_size=[4,4], 
+            strides=[2,2], 
+            padding='SAME', 
+            activation=tf.nn.leaky_relu,
+            kernel_initializer=initializer, 
+            name='layer1')
 
-    # Layer 3 => [M, 4, 4, 64]
-    conv_3 = tf.layers.conv2d(
-        lrelu_2, 
-        filters=64, 
-        kernel_size=[4,4], 
-        strides=[2,2], 
-        padding='SAME', 
-        kernel_initializer=initializer)
-    norm_3 = tf.layers.batch_normalization(conv_3)
-    lrelu_3 = tf.nn.leaky_relu(norm_3)
+        # Layer 2 => [M, 8, 8, 32]
+        conv_2 = tf.layers.conv2d(
+            conv_1, 
+            filters=32, 
+            kernel_size=[4,4], 
+            strides=[2,2], 
+            padding='SAME', 
+            kernel_initializer=initializer,
+            name='layer2')
+        norm_2 = tf.layers.batch_normalization(conv_2)
+        lrelu_2 = tf.nn.leaky_relu(norm_2)
 
-    # Output layer
-    output_flat = tf.layers.flatten(lrelu_3) # => [M, 4*4*64]
-    output_fc = tf.layers.dense(output_flat, units=1, kernel_initializer=initializer) 
-    output_norm = tf.layers.batch_normalization(output_fc)
-    output = tf.nn.sigmoid(output_norm)  # => [M, 1]
+        # Layer 3 => [M, 4, 4, 64]
+        conv_3 = tf.layers.conv2d(
+            lrelu_2, 
+            filters=64, 
+            kernel_size=[4,4], 
+            strides=[2,2], 
+            padding='SAME', 
+            kernel_initializer=initializer, 
+            name='layer3')
+        norm_3 = tf.layers.batch_normalization(conv_3)
+        lrelu_3 = tf.nn.leaky_relu(norm_3)
 
-    return output
+        # Output layer
+        output_flat = tf.layers.flatten(lrelu_3) # => [M, 4*4*64]
+        output_fc = tf.layers.dense(
+            output_flat, 
+            units=1, 
+            kernel_initializer=initializer, 
+            name='output') 
+        output_norm = tf.layers.batch_normalization(output_fc)
+        output = tf.nn.sigmoid(output_norm)  # => [M, 1]
+
+        return output
 
 # loss
 def loss(Dx, Dg):
@@ -168,8 +201,8 @@ def trainers():
     # forward pass
     weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
     generated_images = generator(Z, weights_initializer)
-    Dx = discriminator(images, weights_initializer)
-    Dg = discriminator(generated_images, weights_initializer)
+    Dx = discriminator(images, weights_initializer, False)
+    Dg = discriminator(generated_images, weights_initializer, True)
 
     # compute losses
     loss_d, loss_g = loss(Dx, Dg)
@@ -179,8 +212,10 @@ def trainers():
     optimizer_d = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5)
 
     # backprop
-    train_g = optimizer_g.minimize(loss_g)
-    train_d = optimizer_d.minimize(loss_d)
+    g_vars = tf.trainable_variables(scope=GENERATOR_SCOPE)
+    d_vars = tf.trainable_variables(scope=DISCRIMINATOR_SCOPE)
+    train_g = optimizer_g.minimize(loss_g, var_list=g_vars)
+    train_d = optimizer_d.minimize(loss_d, var_list = d_vars)
 
     return train_d, train_g
 
@@ -193,17 +228,26 @@ with tf.Session() as sess:
     sess.run(init)
 
     # dataset
-    numpy_data = load_data()
-    X = data_tensor(numpy_data)
-    batch_size = 128
-    dataset = tf.data.Dataset.from_tensor_slices(X).batch(batch_size)
-    iterator = dataset.make_one_shot_iterator()
+    dataset, num_batches = load_dataset()
+    iterator = dataset.make_initializable_iterator()
     next_batch = iterator.get_next()
 
-    # expect to have 546 batches, with some left-over
-    for i in range(547):
-        images = sess.run(next_batch)
-        print("batch " + str(i) + ": shape = " + str(images.shape))
+    # loop over epochs
+    num_epochs = 3
+    for epoch in range(num_epochs):
+        sess.run(iterator.initializer)
+        print("epoch: " + str(epoch))
+
+        # loop over batches
+        for i in range(num_batches):
+
+            # train
+            images = sess.run(next_batch)
+            Z = sess.run(tf.random_uniform([images.shape[0], 100])) # creating this every time is too slow
+            print("batch " + str(i) + ": images_shape = " + str(images.shape) + ", Z_shape = " + str(Z.shape))
+
+
+
 
 
 
