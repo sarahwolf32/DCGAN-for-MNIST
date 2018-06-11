@@ -159,22 +159,36 @@ def loss(Dx, Dg):
 
 
 # Training
+def trainers():
 
-# create a placeholder for the real images batch
-# create a placeholder for Z
-weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
-# create generated images with G
-# compute dx and dg with D
-# compute losses
-# create AdamOptimizer => learning_rate = 0.0002, B1 = 0.5 
-# Question: do I need two optimizers, or one?
-# minimize both losses
+    # create a placeholders
+    images = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
+    Z = tf.placeholder(tf.float32, shape=[None, 100])
+
+    # forward pass
+    weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
+    generated_images = generator(Z, weights_initializer)
+    Dx = discriminator(images, weights_initializer)
+    Dg = discriminator(generated_images, weights_initializer)
+
+    # compute losses
+    loss_d, loss_g = loss(Dx, Dg)
+
+    # optimizers
+    optimizer_g = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5)
+    optimizer_d = tf.train.AdamOptimizer(learning_rate=0.0002, beta1=0.5)
+
+    # backprop
+    train_g = optimizer_g.minimize(loss_g)
+    train_d = optimizer_d.minimize(loss_d)
+
+    return train_d, train_g
 
 
 # Main
 
-numpy_data = load_data()
-X = data_tensor(numpy_data)
+""" numpy_data = load_data()
+X = data_tensor(numpy_data) """
 
 # create a dataset from X
 # split dataset into batches of size 128
