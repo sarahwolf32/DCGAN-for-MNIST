@@ -186,13 +186,25 @@ def trainers():
 
 
 # Main
+train_d, train_g = trainers()
+init = tf.global_variables_initializer()
 
-""" numpy_data = load_data()
-X = data_tensor(numpy_data) """
+with tf.Session() as sess:
+    sess.run(init)
 
-# create a dataset from X
-# split dataset into batches of size 128
-# create an iterator
+    # dataset
+    numpy_data = load_data()
+    X = data_tensor(numpy_data)
+    batch_size = 128
+    dataset = tf.data.Dataset.from_tensor_slices(X).batch(batch_size)
+    iterator = dataset.make_one_shot_iterator()
+    next_batch = iterator.get_next()
+
+    # expect to have 546 batches, with some left-over
+    for i in range(547):
+        images = sess.run(next_batch)
+        print("batch " + str(i) + ": shape = " + str(images.shape))
+
 
 
 
