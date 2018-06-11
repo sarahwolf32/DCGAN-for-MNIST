@@ -147,29 +147,46 @@ def discriminator(images, initializer):
 
     return output
 
+# loss
+def loss(Dx, Dg):
+    '''
+    Dx = Probabilities assigned by D to the real images, [M, 1]
+    Dg = Probabilities assigned by D to the generated images, [M, 1]
+    '''
+    loss_d = -tf.reduce_mean(tf.log(Dx) + tf.log(1. - Dg))
+    loss_g = tf.reduce_mean(tf.log(1. - Dg))
+    return loss_d, loss_g
+
 
 # Training
-'''
-Loss(D) = -(1/m) SUM_OVER_M[ log(D(x)) + log(1 - D(G(z)))]
-Loss(G) = (1/m) SUM_OVER_M[ log(1 - D(G(z)))]
 
-Mini-batch size 128
-Mini-batch stochastic gradient descent
-Initialize weights from zero-centered normal distribution, 0.02 standard deviation
-AdamOptimizer => learning_rate = 0.0002, B1 = 0.5
-'''
+# create a placeholder for the real images batch
+# create a placeholder for Z
+weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
+# create generated images with G
+# compute dx and dg with D
+# compute losses
+# create AdamOptimizer => learning_rate = 0.0002, B1 = 0.5 
+# Question: do I need two optimizers, or one?
+# minimize both losses
 
 
 # Main
-""" 
+
 numpy_data = load_data()
 X = data_tensor(numpy_data)
-weights_initializer = tf.truncated_normal_initializer(stddev=0.02) 
-"""
-weights_initializer = tf.truncated_normal_initializer(stddev=0.02) 
+
+# create a dataset from X
+# split dataset into batches of size 128
+# create an iterator
 
 
-# Test generator
+
+
+
+
+# Temporary Tests
+""" # Test generator
     # create a [M, 100] constant
     # run it through the generator
     # output should be correct shape
@@ -202,6 +219,18 @@ with tf.Session() as sess:
     print("out.shape:")
     print(out.shape)
     print(out) 
+
+# Test loss
+    # create two [M, 1] constants
+    # evaluate losses
+    # should get back two floats
+print("testing loss!")
+Dx = tf.random_uniform([M, 1])
+Dg = tf.random_uniform([M, 1])
+with tf.Session() as sess:
+    loss_d, loss_g = sess.run(loss(Dx, Dg))
+    print("loss_d = ", str(loss_d))
+    print("loss_g = ", str(loss_g)) """
 
 
 """ 
