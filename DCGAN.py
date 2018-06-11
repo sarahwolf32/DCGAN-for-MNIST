@@ -42,14 +42,14 @@ def data_tensor(numpy_data):
     return X
 
 
-def generator(Z):
+def generator(Z, initializer):
     '''
     Takes an argument Z, a [M, 100] tensor of random numbers.
     Returns an operation that creates a generated image of shape [None, 32, 32, 1]
     '''
 
     # Input Layer
-    input_fc = tf.layers.dense(Z, 4*4*256, activation=None)
+    input_fc = tf.layers.dense(Z, 4*4*256, kernel_initializer=initializer)
     input_norm = tf.layers.batch_normalization(input_fc)
     input_relu = tf.nn.relu(input_norm)
     input_reshape = tf.reshape(input_relu, [-1, 4, 4, 256])
@@ -61,7 +61,7 @@ def generator(Z):
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME',
-        activation=None)
+        kernel_initializer=initializer)
     norm_1 = tf.layers.batch_normalization(deconv_1)
     relu_1 = tf.nn.relu(norm_1)
 
@@ -72,7 +72,7 @@ def generator(Z):
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME', 
-        activation=None)
+        kernel_initializer=initializer)
     norm_2 = tf.layers.batch_normalization(deconv_2)
     relu_2 = tf.nn.relu(norm_2)
 
@@ -83,39 +83,39 @@ def generator(Z):
         kernel_size=[5,5], 
         strides=[2,2], 
         padding='SAME', 
-        activation=None)
+        kernel_initializer=initializer)
     norm_3 = tf.layers.batch_normalization(deconv_3)
     relu_3 = tf.nn.relu(norm_3)
 
     # Output Layer
-    # No batch norm
     output = tf.layers.conv2d_transpose(
         relu_3, 
         filters=1,
         kernel_size=[32,32],
         padding='SAME',
-        activation=tf.nn.tanh)
+        activation=tf.nn.tanh,
+        kernel_initializer=initializer)
 
     # Generated images of shape [M, 32, 32, 1]
     return output
 
 
 # Discriminator
-def discriminator(images):
+def discriminator(images, initializer):
     '''
     Takes an image as an argument [None, 32, 32, 1].
     Returns an operation that gives the probability of that image being 'real' [None, 1]
     '''
 
     # Layer 1 => [M, 16, 16, 16]
-    # No batch norm
     conv_1 = tf.layers.conv2d(
         images, 
         filters=16, 
         kernel_size=[4,4], 
         strides=[2,2], 
         padding='SAME', 
-        activation=tf.nn.leaky_relu)
+        activation=tf.nn.leaky_relu,
+        kernel_initializer=initializer)
 
     # Layer 2 => [M, 8, 8, 32]
     conv_2 = tf.layers.conv2d(
@@ -124,7 +124,7 @@ def discriminator(images):
         kernel_size=[4,4], 
         strides=[2,2], 
         padding='SAME', 
-        activation=None)
+        kernel_initializer=initializer)
     norm_2 = tf.layers.batch_normalization(conv_2)
     lrelu_2 = tf.nn.leaky_relu(norm_2)
 
@@ -135,13 +135,13 @@ def discriminator(images):
         kernel_size=[4,4], 
         strides=[2,2], 
         padding='SAME', 
-        activation=None)
+        kernel_initializer=initializer)
     norm_3 = tf.layers.batch_normalization(conv_3)
     lrelu_3 = tf.nn.leaky_relu(norm_3)
 
     # Output layer
     output_flat = tf.layers.flatten(lrelu_3) # => [M, 4*4*64]
-    output_fc = tf.layers.dense(output_flat, units=1, activation=None) 
+    output_fc = tf.layers.dense(output_flat, units=1, kernel_initializer=initializer) 
     output_norm = tf.layers.batch_normalization(output_fc)
     output = tf.nn.sigmoid(output_norm)  # => [M, 1]
 
@@ -161,26 +161,30 @@ AdamOptimizer => learning_rate = 0.0002, B1 = 0.5
 
 
 # Main
-'''
+""" 
 numpy_data = load_data()
 X = data_tensor(numpy_data)
-'''
+weights_initializer = tf.truncated_normal_initializer(stddev=0.02) 
+"""
+weights_initializer = tf.truncated_normal_initializer(stddev=0.02) 
+
 
 # Test generator
     # create a [M, 100] constant
     # run it through the generator
     # output should be correct shape
-""" print ("testing generator!")
+print ("testing generator!")
 M = 5
 Z = tf.random_uniform([M, 100])
-G = generator(Z)
+G = generator(Z, weights_initializer)
 init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 out = sess.run(G)
 print("got an out for G!")
 print("should be of shape [M, 32, 32, 1]")
-print("real shape: " + str(out.shape)) """
+print("real shape: " + str(out.shape)) 
+
 
 # Test discriminator
     # create a [M, 32, 32, 1] constant
@@ -189,7 +193,7 @@ print("real shape: " + str(out.shape)) """
 print("testing discriminator!")
 M = 5
 images = tf.random_uniform([M, 32, 32, 1])
-D = discriminator(images)
+D = discriminator(images, weights_initializer)
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
