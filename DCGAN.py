@@ -191,10 +191,6 @@ def loss(Dx, Dg):
 # Training
 def trainers(images_holder, Z_holder):
 
-    # create a placeholders
-    #images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
-    #Z_holder = tf.placeholder(tf.float32, shape=[None, 100])
-
     # forward pass
     weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
     generated_images = generator(Z_holder, weights_initializer)
@@ -214,7 +210,7 @@ def trainers(images_holder, Z_holder):
     train_g = optimizer_g.minimize(loss_g, var_list=g_vars)
     train_d = optimizer_d.minimize(loss_d, var_list = d_vars)
 
-    return train_d, train_g
+    return train_d, train_g, loss_d, loss_g
 
 
 # Main
@@ -224,7 +220,7 @@ images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
 Z_holder = tf.placeholder(tf.float32, shape=[None, 100])
 
 # get trainers
-train_d, train_g = trainers(images_holder, Z_holder)
+train_d, train_g, loss_d, loss_g = trainers(images_holder, Z_holder)
 init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
@@ -250,8 +246,12 @@ with tf.Session() as sess:
             print("batch " + str(i) + ": images_shape = " + str(images.shape) + ", Z_shape = " + str(Z.shape))
 
             # run session
-            sess.run(train_d, feed_dict={images_holder: images, Z_holder: Z})
-            sess.run(train_g, feed_dict={Z_holder: Z})
+            _, loss_d_val = sess.run([train_d, loss_d], feed_dict={images_holder: images, Z_holder: Z})
+            _, loss_g_val = sess.run([train_g, loss_g], feed_dict={Z_holder: Z})
+
+            # print losses
+            print("G loss: " + str(loss_g_val))
+            print("D loss: " + str(loss_d_val))
             
 
 
