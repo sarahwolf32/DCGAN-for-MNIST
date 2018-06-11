@@ -189,16 +189,16 @@ def loss(Dx, Dg):
 
 
 # Training
-def trainers():
+def trainers(images_holder, Z_holder):
 
     # create a placeholders
-    images = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
-    Z = tf.placeholder(tf.float32, shape=[None, 100])
+    #images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
+    #Z_holder = tf.placeholder(tf.float32, shape=[None, 100])
 
     # forward pass
     weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
-    generated_images = generator(Z, weights_initializer)
-    Dx = discriminator(images, weights_initializer, False)
+    generated_images = generator(Z_holder, weights_initializer)
+    Dx = discriminator(images_holder, weights_initializer, False)
     Dg = discriminator(generated_images, weights_initializer, True)
 
     # compute losses
@@ -218,7 +218,13 @@ def trainers():
 
 
 # Main
-train_d, train_g = trainers()
+
+# create a placeholders
+images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1])
+Z_holder = tf.placeholder(tf.float32, shape=[None, 100])
+
+# get trainers
+train_d, train_g = trainers(images_holder, Z_holder)
 init = tf.global_variables_initializer()
 
 with tf.Session() as sess:
@@ -241,10 +247,12 @@ with tf.Session() as sess:
             # train
             images = sess.run(next_batch)
             Z = np.random.uniform(-1.0, 1.0, size=[images.shape[0], 100])
-
             print("batch " + str(i) + ": images_shape = " + str(images.shape) + ", Z_shape = " + str(Z.shape))
 
-
+            # run session
+            sess.run(train_d, feed_dict={images_holder: images, Z_holder: Z})
+            sess.run(train_g, feed_dict={Z_holder: Z})
+            
 
 
 
