@@ -1,5 +1,4 @@
 # DCGAN
-A tensorflow implementation of DCGAN on MNIST data, from the paper by Radford et al.
 
 This is an implementation of the paper ['Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks' by Radford, et al](https://arxiv.org/pdf/1511.06434.pdf).
 

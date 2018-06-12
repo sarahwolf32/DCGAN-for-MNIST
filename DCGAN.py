@@ -223,6 +223,12 @@ Z_holder = tf.placeholder(tf.float32, shape=[None, 100])
 train_d, train_g, loss_d, loss_g = trainers(images_holder, Z_holder)
 init = tf.global_variables_initializer()
 
+# prepare summaries
+loss_d_summary_op = tf.summary.scalar('Loss_D', loss_d)
+loss_g_summary_op = tf.summary.scalar('Loss_G', loss_g)
+summary_op = tf.summary.merge_all()
+writer = tf.summary.FileWriter('dcgan_summaries', graph=tf.get_default_graph())
+
 with tf.Session() as sess:
     sess.run(init)
 
@@ -233,6 +239,7 @@ with tf.Session() as sess:
 
     # loop over epochs
     num_epochs = 3
+    global_step = 0
     for epoch in range(num_epochs):
         sess.run(iterator.initializer)
         print("epoch: " + str(epoch))
@@ -248,6 +255,12 @@ with tf.Session() as sess:
             # run session
             _, loss_d_val = sess.run([train_d, loss_d], feed_dict={images_holder: images, Z_holder: Z})
             _, loss_g_val = sess.run([train_g, loss_g], feed_dict={Z_holder: Z})
+
+            # tensorboard
+            if global_step % 10 == 0:
+                summary = sess.run(summary_op, feed_dict={images_holder: images, Z_holder: Z})
+                writer.add_summary(summary, global_step=global_step)
+            global_step += 1
 
             # print losses
             print("G loss: " + str(loss_g_val))
