@@ -1,7 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import time
-import argparse
 
 '''
 Generates new hand-written digit images based on the MNIST dataset.
@@ -245,26 +243,25 @@ def trainers(images_holder, Z_holder):
     return train_d, train_g, loss_d, loss_g, generated_images
 
 
-def train(event_filename):
+# Main
 
-    # create a placeholders
-    images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1])
-    Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100])
+# create a placeholders
+images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1])
+Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100])
 
-    # get trainers
-    train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
-    init = tf.global_variables_initializer()
+# get trainers
+train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
+init = tf.global_variables_initializer()
 
-    # prepare summaries
-    loss_d_summary_op = tf.summary.scalar('Discriminator Loss', loss_d)
-    loss_g_summary_op = tf.summary.scalar('Generator Loss', loss_g)
-    images_summary_op = tf.summary.image('Generated Image', generated_images, max_outputs=1)
-    training_images_summary_op = tf.summary.image('Training Image', images_holder, max_outputs=1)
-    summary_op = tf.summary.merge_all()
-    writer = tf.summary.FileWriter(event_filename, graph=tf.get_default_graph())
+# prepare summaries
+loss_d_summary_op = tf.summary.scalar('Discriminator Loss', loss_d)
+loss_g_summary_op = tf.summary.scalar('Generator Loss', loss_g)
+images_summary_op = tf.summary.image('Generated Image', generated_images, max_outputs=1)
+training_images_summary_op = tf.summary.image('Training Image', images_holder, max_outputs=1)
+summary_op = tf.summary.merge_all()
+writer = tf.summary.FileWriter('dcgan_summaries', graph=tf.get_default_graph())
 
-    # begin session
-    sess = tf.Session()
+with tf.Session() as sess:
     sess.run(init)
 
     # dataset
@@ -282,7 +279,6 @@ def train(event_filename):
 
         # loop over batches
         for i in range(num_batches):
-            start_time = time.time()
 
             # train
             images = sess.run(next_batch)
@@ -301,29 +297,10 @@ def train(event_filename):
                 writer.add_summary(summary, global_step=global_step)
             global_step += 1
 
-            # monitor time
-            end_time = time.time()
-            run_time = end_time - start_time 
-            print("batch-time: " + str(run_time))
-
             # print losses
             print("G loss: " + str(loss_g_val))
             print("D loss: " + str(loss_d_val))
-    
-    sess.close()
-
-# Main
-if __name__ == '__main__':
-
-    # parse arguments
-    # python DCGAN.py --event-file-dir test_1
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--event-file-dir', help='Folder name for Tensorboard output', required=True)
-    args = parser.parse_args()
-
-    # train
-    train(args.event_filename)
-
+            
 
 
 

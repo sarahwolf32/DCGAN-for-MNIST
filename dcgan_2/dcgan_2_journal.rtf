@@ -10,19 +10,11 @@ https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN\
 \
 He shows good results in just 10 epochs!\
 \
-Main differences between his implementation and mine (in the generator):\
-	\'97 Used leaky-ReLU in the generator as well\
-	\'97 No fully connected layer in the generator\
-	\'97 Much higher numbers of filters: \
-		\'97 He uses: 1024, 512, 256, 128, 1\
-		\'97 I\'92m using: 32, 32, 16, 1\
-		\'97 He just shapes z as (None, 1, 1, 100) for this to work, and its fine\
+Changed architecture to match his, and it looks like its working! Success!\
 \
-Main differences (in the discriminator):\
-	\'97 again, much higher numbers of filters\
+Trained only 3 epochs, but it took all night and half a day, had to end the session early for travel.\
 \
-Just thought of something\'85\
-	I\'92m not setting a random seed, maybe that\'92s important\
-	I never did verify the original works\
-	If it does work, I may be doing something simple wrong, and it would be useful to find out what\
-	Then again, training in just 10 epochs is very tempting, I like the look of this demo better 	anyway}
+Next Goal:\
+\
+Find a way to train faster and more conveniently.\
+}
