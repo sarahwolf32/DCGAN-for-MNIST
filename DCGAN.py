@@ -2,21 +2,11 @@ import tensorflow as tf
 import numpy as np
 import time
 import argparse
+import os
 
 '''
 Generates new hand-written digit images based on the MNIST dataset.
 Implementation of DCGAN.
-
-Todo:
-    Next goal: Get it working!
-    - When the discriminator becomes too smart, the gradient for the discriminator goes away.
-    - https://www.reddit.com/r/MachineLearning/comments/5asl74/discussion_discriminator_converging_to_0_loss_in/
-    - actually train for a long time
-    - if it does not work:
-        - try running the tutorial code. Does that work?
-    - differences b/w this and tutorial code:
-        - they train the discriminator twice
-        - they take random batches as samples
 '''
 
 GENERATOR_SCOPE = 'generator'
@@ -244,8 +234,15 @@ def trainers(images_holder, Z_holder):
 
     return train_d, train_g, loss_d, loss_g, generated_images
 
+def save_model(checkpoint_dir, session, step, saver):
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+    model_name = checkpoint_dir + '/model-' + str(step) + '.cptk'
+    saver.save(session, model_name)
+    print("saved model!")
 
-def train(event_filename):
+
+def train(event_filename, log_freq, num_epochs, checkpoint_freq, checkpoint_dir):
 
     # create a placeholders
     images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1])
@@ -263,6 +260,8 @@ def train(event_filename):
     summary_op = tf.summary.merge_all()
     writer = tf.summary.FileWriter(event_filename, graph=tf.get_default_graph())
 
+    saver = tf.train.Saver()
+
     # begin session
     sess = tf.Session()
     sess.run(init)
@@ -273,43 +272,44 @@ def train(event_filename):
     next_batch = iterator.get_next()
 
     # loop over epochs
-    num_epochs = 2000
     global_step = 0
-
     for epoch in range(num_epochs):
         sess.run(iterator.initializer)
-        print("epoch: " + str(epoch))
 
         # loop over batches
         for i in range(num_batches):
-            start_time = time.time()
+            #start_time = time.time()
 
             # train
             images = sess.run(next_batch)
             Z = np.random.normal(0.0, 1.0, size=[images.shape[0], 1, 1, 100])
-            print("batch " + str(i) + ": images_shape = " + str(images.shape) + ", Z_shape = " + str(Z.shape))
 
             # run session
             feed_dict = {images_holder: images, Z_holder: Z}
-            loss_d_val = sess.run(loss_d, feed_dict=feed_dict)
             sess.run(train_d, feed_dict=feed_dict)
-            _, loss_g_val = sess.run([train_g, loss_g], feed_dict=feed_dict)
+            sess.run(train_g, feed_dict=feed_dict)
 
-            # tensorboard
-            if global_step % 10 == 0:
+            # logging
+            if global_step % log_freq == 0:
                 summary = sess.run(summary_op, feed_dict=feed_dict)
                 writer.add_summary(summary, global_step=global_step)
+
+                loss_d_val = sess.run(loss_d, feed_dict=feed_dict)
+                loss_g_val = sess.run(loss_g, feed_dict=feed_dict)
+                print("epoch: " + str(epoch) + ", batch " + str(i))
+                print("G loss: " + str(loss_g_val))
+                print("D loss: " + str(loss_d_val))
+
+            # saving
+            if global_step % checkpoint_freq == 0:
+                save_model(checkpoint_dir, sess, global_step, saver)
             global_step += 1
 
             # monitor time
-            end_time = time.time()
-            run_time = end_time - start_time 
-            print("batch-time: " + str(run_time))
+            #end_time = time.time()
+            #run_time = end_time - start_time 
+            #print("batch-time: " + str(run_time))
 
-            # print losses
-            print("G loss: " + str(loss_g_val))
-            print("D loss: " + str(loss_d_val))
-    
     sess.close()
 
 # Main
@@ -318,11 +318,24 @@ if __name__ == '__main__':
     # parse arguments
     # python DCGAN.py --event-file-dir test_1
     parser = argparse.ArgumentParser()
-    parser.add_argument('--event-file-dir', help='Folder name for Tensorboard output', required=True)
+    parser.add_argument('--event-file-dir', help='Folder name for Tensorboard output', required=False)
+    parser.add_argument('--log-freq', help='n, where progress is logged every n steps', required=False)
+    parser.add_argument('--num-epochs', help='number of epochs to train', required=False)
     args = parser.parse_args()
 
+    # unwrap optional arguments
+    event_filename = args.event_file_dir or 'summary'
+    log_freq = args.log_freq or 2
+    num_epochs = args.num_epochs or 15
+
     # train
-    train(args.event_filename)
+    train(
+        event_filename=event_filename,
+        log_freq=log_freq,
+        num_epochs=num_epochs,
+        checkpoint_freq=1,
+        checkpoint_dir='checkpoints'
+    )
 
 
 
