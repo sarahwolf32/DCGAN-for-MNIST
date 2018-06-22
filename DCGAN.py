@@ -1,8 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import time
-import argparse
 import os
+from train_config import TrainConfig
 
 '''
 Generates new hand-written digit images based on the MNIST dataset.
@@ -120,7 +120,7 @@ def generator(Z, initializer):
         lrelu_4 = tf.nn.leaky_relu(norm_4)
 
         # Output Layer
-        output = tf.layers.conv2d_transpose(
+        deconv_5 = tf.layers.conv2d_transpose(
             lrelu_4, 
             filters=1,
             kernel_size=[4,4],
@@ -129,6 +129,7 @@ def generator(Z, initializer):
             activation=tf.nn.tanh,
             kernel_initializer=initializer,
             name='layer5')
+        output = tf.identity(deconv_5, name='generated_images')
 
         # Generated images of shape [M, 64, 64, 1]
         return output
@@ -204,10 +205,14 @@ def loss(Dx, Dg):
     Dg = Probabilities assigned by D to the generated images, [M, 1]
     '''
     with tf.variable_scope('loss'):
-        loss_d = -tf.reduce_mean(tf.log(Dx) + tf.log(1. - Dg))
-        #loss_g = tf.reduce_mean(tf.log(1. - Dg))
-        loss_g = -tf.reduce_mean(tf.log(Dg))
+        loss_d = tf.identity(-tf.reduce_mean(tf.log(Dx) + tf.log(1. - Dg)), name='loss_d')
+        loss_g = tf.identity(-tf.reduce_mean(tf.log(Dg)), name='loss_g')
         return loss_d, loss_g
+
+def increment(variable, sess):
+    sess.run(tf.assign_add(variable, 1))
+    new_val = sess.run(variable)
+    return new_val
 
 
 # Training
@@ -229,28 +234,32 @@ def trainers(images_holder, Z_holder):
     # backprop
     g_vars = tf.trainable_variables(scope=GENERATOR_SCOPE)
     d_vars = tf.trainable_variables(scope=DISCRIMINATOR_SCOPE)
-    train_g = optimizer_g.minimize(loss_g, var_list=g_vars)
-    train_d = optimizer_d.minimize(loss_d, var_list = d_vars)
+    train_g = optimizer_g.minimize(loss_g, var_list=g_vars, name='train_g')
+    train_d = optimizer_d.minimize(loss_d, var_list = d_vars, name='train_d')
 
     return train_d, train_g, loss_d, loss_g, generated_images
+
 
 def save_model(checkpoint_dir, session, step, saver):
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
     model_name = checkpoint_dir + '/model-' + str(step) + '.cptk'
-    saver.save(session, model_name)
+    saver.save(session, model_name, global_step=step)
     print("saved model!")
 
-
-def train(event_filename, log_freq, num_epochs, checkpoint_freq, checkpoint_dir):
+def create_training_ops():
 
     # create a placeholders
-    images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1])
-    Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100])
+    images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1], name='images_holder')
+    Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers
     train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
-    init = tf.global_variables_initializer()
+
+    # initialize variables
+    global_step_var = tf.Variable(0, name='global_step')
+    epoch_var = tf.Variable(0, name='epoch')
+    batch_var = tf.Variable(0, name='batch')
 
     # prepare summaries
     loss_d_summary_op = tf.summary.scalar('Discriminator Loss', loss_d)
@@ -258,154 +267,136 @@ def train(event_filename, log_freq, num_epochs, checkpoint_freq, checkpoint_dir)
     images_summary_op = tf.summary.image('Generated Image', generated_images, max_outputs=1)
     training_images_summary_op = tf.summary.image('Training Image', images_holder, max_outputs=1)
     summary_op = tf.summary.merge_all()
-    writer = tf.summary.FileWriter(event_filename, graph=tf.get_default_graph())
 
-    saver = tf.train.Saver()
+    return {
+        'images_holder': images_holder,
+        'Z_holder': Z_holder,
+        'train_d': train_d,
+        'train_g': train_g,
+        'loss_d': loss_d,
+        'loss_g': loss_g,
+        'generated_images': generated_images,
+        'summary_op': summary_op,
+        'global_step_var': global_step_var,
+        'epoch_var': epoch_var,
+        'batch_var': batch_var
+    }
 
-    # begin session
-    sess = tf.Session()
-    sess.run(init)
+def retrieve_training_ops(sess):
+    graph = sess.graph
+    saved_ops = {
+        'train_d': graph.get_operation_by_name('train_d'),
+        'train_g': graph.get_operation_by_name('train_g'),
+        'loss_d': graph.get_tensor_by_name('loss/loss_d:0'),
+        'loss_g': graph.get_tensor_by_name('loss/loss_g:0'),
+        'generated_images': graph.get_tensor_by_name('generator/generated_images:0'),
+        'global_step_var': graph.get_tensor_by_name('global_step:0'),
+        'batch_var': graph.get_tensor_by_name('batch:0'),
+        'epoch_var': graph.get_tensor_by_name('epoch:0'),
+        'summary_op': graph.get_tensor_by_name('Merge/MergeSummary:0')    
+    }
+    return saved_ops
 
-    # dataset
+
+
+def train(sess, args, config):
+    
+    writer = tf.summary.FileWriter(config.event_filename, graph=tf.get_default_graph())
+
+    # unwrap ops
+    train_d = args['train_d']
+    train_g = args['train_g']
+    loss_d = args['loss_d']
+    loss_g = args['loss_g']
+    generated_images = args['generated_images']
+    summary_op = args['summary_op']
+    global_step_var = args['global_step_var']
+    batch_var = args['batch_var']
+    epoch_var = args['epoch_var']
+        
+    # prepare data
     dataset, num_batches = load_dataset()
     iterator = dataset.make_initializable_iterator()
     next_batch = iterator.get_next()
 
+    saver = tf.train.Saver()
+
+    epoch = sess.run(epoch_var)
+    batch = sess.run(batch_var)
+    global_step = sess.run(global_step_var)
+
     # loop over epochs
-    global_step = 0
-    for epoch in range(num_epochs):
+    while epoch < config.num_epochs:
         sess.run(iterator.initializer)
 
         # loop over batches
-        for i in range(num_batches):
-            #start_time = time.time()
+        while batch < num_batches:
 
-            # train
+            # inputs
             images = sess.run(next_batch)
             Z = np.random.normal(0.0, 1.0, size=[images.shape[0], 1, 1, 100])
 
             # run session
-            feed_dict = {images_holder: images, Z_holder: Z}
+            feed_dict = {'images_holder:0': images, 'z_holder:0': Z}
             sess.run(train_d, feed_dict=feed_dict)
             sess.run(train_g, feed_dict=feed_dict)
 
             # logging
-            if global_step % log_freq == 0:
+            if global_step % config.log_freq == 0:
                 summary = sess.run(summary_op, feed_dict=feed_dict)
                 writer.add_summary(summary, global_step=global_step)
 
                 loss_d_val = sess.run(loss_d, feed_dict=feed_dict)
                 loss_g_val = sess.run(loss_g, feed_dict=feed_dict)
-                print("epoch: " + str(epoch) + ", batch " + str(i))
+                print("epoch: " + str(epoch) + ", batch " + str(batch))
                 print("G loss: " + str(loss_g_val))
                 print("D loss: " + str(loss_d_val))
 
             # saving
-            if global_step % checkpoint_freq == 0:
-                save_model(checkpoint_dir, sess, global_step, saver)
-            global_step += 1
+            if global_step % config.checkpoint_freq == 0:
+                save_model(config.checkpoint_dir, sess, global_step, saver)
 
-            # monitor time
-            #end_time = time.time()
-            #run_time = end_time - start_time 
-            #print("batch-time: " + str(run_time))
+            global_step = increment(global_step_var, sess)
+            batch = increment(batch_var, sess)
+
+        epoch = increment(epoch_var, sess)
 
     sess.close()
+
+
+def begin_training(config):
+    ops = create_training_ops()
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    train(sess, ops, config)
+
+
+def continue_training(config):
+
+    with tf.Session() as sess:
+
+        # load stored graph into current graph
+        graph_filename = str(tf.train.latest_checkpoint(config.checkpoint_dir)) + '.meta'
+        saver = tf.train.import_meta_graph(graph_filename)
+
+         # restore variables into graph
+        saver.restore(sess, tf.train.latest_checkpoint(config.checkpoint_dir))
+
+        ops = retrieve_training_ops(sess)
+        train(sess, ops, config)
+
 
 # Main
 if __name__ == '__main__':
 
     # parse arguments
-    # python DCGAN.py --event-file-dir test_1
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--event-file-dir', help='Folder name for Tensorboard output', required=False)
-    parser.add_argument('--log-freq', help='n, where progress is logged every n steps', required=False)
-    parser.add_argument('--num-epochs', help='number of epochs to train', required=False)
-    args = parser.parse_args()
-
-    # unwrap optional arguments
-    event_filename = args.event_file_dir or 'summary'
-    log_freq = args.log_freq or 2
-    num_epochs = args.num_epochs or 15
+    config = TrainConfig()
+    config.populate()
 
     # train
-    train(
-        event_filename=event_filename,
-        log_freq=log_freq,
-        num_epochs=num_epochs,
-        checkpoint_freq=1,
-        checkpoint_dir='checkpoints'
-    )
+    if config.should_continue:
+        continue_training(config)
+    else:
+        begin_training(config)
+    
 
-
-
-
-
-
-
-
-"""
-# Temporary Tests
-     # Test generator
-    # create a [M, 100] constant
-    # run it through the generator
-    # output should be correct shape
-print ("testing my generator!")
-weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
-M = 5
-Z = tf.random_uniform([M, 1, 1, 100])
-layer1, layer2, layer3, layer4, o = generator(Z, weights_initializer)
-init = tf.global_variables_initializer()
-sess = tf.Session()
-sess.run(init)
-layer1_val, layer2_val, layer3_val, layer4_val, o_val = sess.run([layer1, layer2, layer3, layer4, o])
-print("input: " + str(Z.shape))
-print("Layer1: " + str(layer1_val.shape))
-print("Layer2: " + str(layer2_val.shape))
-print("Layer3: " + str(layer3_val.shape))
-print("Layer4: " + str(layer4_val.shape))
-print("out: " + str(o.shape))
-
-"""
-"""
-# Test discriminator
-    # create a [M, 32, 32, 1] constant
-    # run it through the discriminator
-    # output should be of the correct shape
-print("testing discriminator!")
-weights_initializer = tf.truncated_normal_initializer(stddev=0.02)
-M = 5
-images = tf.random_uniform([M, 64, 64, 1])
-D = discriminator(images, weights_initializer)
-init = tf.global_variables_initializer()
-with tf.Session() as sess:
-    sess.run(init)
-    out = sess.run(D)
-    print("got an out! Should be shape [M, 1]")
-    print("out.shape:")
-    print(out.shape)
-    print(out) 
-"""
-"""
-# Test loss
-    # create two [M, 1] constants
-    # evaluate losses
-    # should get back two floats
-print("testing loss!")
-Dx = tf.random_uniform([M, 1])
-Dg = tf.random_uniform([M, 1])
-with tf.Session() as sess:
-    loss_d, loss_g = sess.run(loss(Dx, Dg))
-    print("loss_d = ", str(loss_d))
-    print("loss_g = ", str(loss_g)) """
-
-
-""" 
-print("done loading data!")
-
-sess = tf.Session()
-
-d = sess.run(X)
-print("data shape:")
-print(d.shape) 
-"""
