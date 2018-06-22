@@ -250,28 +250,24 @@ def save_model(checkpoint_dir, session, step, saver):
 
 def create_training_ops():
 
-    ops = TrainOps()
-
     # create a placeholders
     images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1], name='images_holder')
     Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers
-    ops.train_d, ops.train_g, ops.loss_d, ops.loss_g, ops.generated_images = trainers(images_holder, Z_holder)
+    train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
 
     # initialize variables
-    ops.global_step_var = tf.Variable(0, name='global_step')
-    ops.epoch_var = tf.Variable(0, name='epoch')
-    ops.batch_var = tf.Variable(0, name='batch')
+    global_step_var = tf.Variable(0, name='global_step')
+    epoch_var = tf.Variable(0, name='epoch')
+    batch_var = tf.Variable(0, name='batch')
 
     # prepare summaries
-    loss_d_summary_op = tf.summary.scalar('Discriminator Loss', ops.loss_d)
-    loss_g_summary_op = tf.summary.scalar('Generator Loss', ops.loss_g)
-    images_summary_op = tf.summary.image('Generated Image', ops.generated_images, max_outputs=1)
+    loss_d_summary_op = tf.summary.scalar('Discriminator Loss', loss_d)
+    loss_g_summary_op = tf.summary.scalar('Generator Loss', loss_g)
+    images_summary_op = tf.summary.image('Generated Image', generated_images, max_outputs=1)
     training_images_summary_op = tf.summary.image('Training Image', images_holder, max_outputs=1)
-    ops.summary_op = tf.summary.merge_all()
-
-    return ops
+    summary_op = tf.summary.merge_all()
 
 
 def train(sess, ops, config):
@@ -329,9 +325,11 @@ def train(sess, ops, config):
 
 
 def begin_training(config):
-    ops = create_training_ops()
+    create_training_ops()
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
+    ops = TrainOps()
+    ops.populate(sess)
     train(sess, ops, config)
 
 
