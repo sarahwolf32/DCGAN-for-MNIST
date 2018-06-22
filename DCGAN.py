@@ -3,6 +3,7 @@ import numpy as np
 import time
 import os
 from train_config import TrainConfig
+from train_ops import TrainOps
 
 '''
 Generates new hand-written digit images based on the MNIST dataset.
@@ -249,70 +250,33 @@ def save_model(checkpoint_dir, session, step, saver):
 
 def create_training_ops():
 
+    ops = TrainOps()
+
     # create a placeholders
     images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1], name='images_holder')
     Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers
-    train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
+    ops.train_d, ops.train_g, ops.loss_d, ops.loss_g, ops.generated_images = trainers(images_holder, Z_holder)
 
     # initialize variables
-    global_step_var = tf.Variable(0, name='global_step')
-    epoch_var = tf.Variable(0, name='epoch')
-    batch_var = tf.Variable(0, name='batch')
+    ops.global_step_var = tf.Variable(0, name='global_step')
+    ops.epoch_var = tf.Variable(0, name='epoch')
+    ops.batch_var = tf.Variable(0, name='batch')
 
     # prepare summaries
-    loss_d_summary_op = tf.summary.scalar('Discriminator Loss', loss_d)
-    loss_g_summary_op = tf.summary.scalar('Generator Loss', loss_g)
-    images_summary_op = tf.summary.image('Generated Image', generated_images, max_outputs=1)
+    loss_d_summary_op = tf.summary.scalar('Discriminator Loss', ops.loss_d)
+    loss_g_summary_op = tf.summary.scalar('Generator Loss', ops.loss_g)
+    images_summary_op = tf.summary.image('Generated Image', ops.generated_images, max_outputs=1)
     training_images_summary_op = tf.summary.image('Training Image', images_holder, max_outputs=1)
-    summary_op = tf.summary.merge_all()
+    ops.summary_op = tf.summary.merge_all()
 
-    return {
-        'images_holder': images_holder,
-        'Z_holder': Z_holder,
-        'train_d': train_d,
-        'train_g': train_g,
-        'loss_d': loss_d,
-        'loss_g': loss_g,
-        'generated_images': generated_images,
-        'summary_op': summary_op,
-        'global_step_var': global_step_var,
-        'epoch_var': epoch_var,
-        'batch_var': batch_var
-    }
-
-def retrieve_training_ops(sess):
-    graph = sess.graph
-    saved_ops = {
-        'train_d': graph.get_operation_by_name('train_d'),
-        'train_g': graph.get_operation_by_name('train_g'),
-        'loss_d': graph.get_tensor_by_name('loss/loss_d:0'),
-        'loss_g': graph.get_tensor_by_name('loss/loss_g:0'),
-        'generated_images': graph.get_tensor_by_name('generator/generated_images:0'),
-        'global_step_var': graph.get_tensor_by_name('global_step:0'),
-        'batch_var': graph.get_tensor_by_name('batch:0'),
-        'epoch_var': graph.get_tensor_by_name('epoch:0'),
-        'summary_op': graph.get_tensor_by_name('Merge/MergeSummary:0')    
-    }
-    return saved_ops
+    return ops
 
 
-
-def train(sess, args, config):
+def train(sess, ops, config):
     
     writer = tf.summary.FileWriter(config.event_filename, graph=tf.get_default_graph())
-
-    # unwrap ops
-    train_d = args['train_d']
-    train_g = args['train_g']
-    loss_d = args['loss_d']
-    loss_g = args['loss_g']
-    generated_images = args['generated_images']
-    summary_op = args['summary_op']
-    global_step_var = args['global_step_var']
-    batch_var = args['batch_var']
-    epoch_var = args['epoch_var']
         
     # prepare data
     dataset, num_batches = load_dataset()
@@ -321,9 +285,9 @@ def train(sess, args, config):
 
     saver = tf.train.Saver()
 
-    epoch = sess.run(epoch_var)
-    batch = sess.run(batch_var)
-    global_step = sess.run(global_step_var)
+    epoch = sess.run(ops.epoch_var)
+    batch = sess.run(ops.batch_var)
+    global_step = sess.run(ops.global_step_var)
 
     # loop over epochs
     while epoch < config.num_epochs:
@@ -338,16 +302,16 @@ def train(sess, args, config):
 
             # run session
             feed_dict = {'images_holder:0': images, 'z_holder:0': Z}
-            sess.run(train_d, feed_dict=feed_dict)
-            sess.run(train_g, feed_dict=feed_dict)
+            sess.run(ops.train_d, feed_dict=feed_dict)
+            sess.run(ops.train_g, feed_dict=feed_dict)
 
             # logging
             if global_step % config.log_freq == 0:
-                summary = sess.run(summary_op, feed_dict=feed_dict)
+                summary = sess.run(ops.summary_op, feed_dict=feed_dict)
                 writer.add_summary(summary, global_step=global_step)
 
-                loss_d_val = sess.run(loss_d, feed_dict=feed_dict)
-                loss_g_val = sess.run(loss_g, feed_dict=feed_dict)
+                loss_d_val = sess.run(ops.loss_d, feed_dict=feed_dict)
+                loss_g_val = sess.run(ops.loss_g, feed_dict=feed_dict)
                 print("epoch: " + str(epoch) + ", batch " + str(batch))
                 print("G loss: " + str(loss_g_val))
                 print("D loss: " + str(loss_d_val))
@@ -356,10 +320,10 @@ def train(sess, args, config):
             if global_step % config.checkpoint_freq == 0:
                 save_model(config.checkpoint_dir, sess, global_step, saver)
 
-            global_step = increment(global_step_var, sess)
-            batch = increment(batch_var, sess)
+            global_step = increment(ops.global_step_var, sess)
+            batch = increment(ops.batch_var, sess)
 
-        epoch = increment(epoch_var, sess)
+        epoch = increment(ops.epoch_var, sess)
 
     sess.close()
 
@@ -381,8 +345,10 @@ def continue_training(config):
 
          # restore variables into graph
         saver.restore(sess, tf.train.latest_checkpoint(config.checkpoint_dir))
-
-        ops = retrieve_training_ops(sess)
+        
+        # load operations and train
+        ops = TrainOps()
+        ops.populate(sess)
         train(sess, ops, config)
 
 

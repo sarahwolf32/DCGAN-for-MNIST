@@ -8,7 +8,7 @@ class TrainConfig:
         parser.add_argument('--event-file-dir', help='Folder name for Tensorboard output', required=False)
         parser.add_argument('--log-freq', help='n, where progress is logged every n steps', required=False)
         parser.add_argument('--num-epochs', help='number of epochs to train', required=False)
-        parser.add_argument('--continue_train', help='continue training where we left off', required=False)
+        parser.add_argument('--continue-train', help='continue training where we left off', required=False)
         args = parser.parse_args()
         self._populate_from_args(args)
 
