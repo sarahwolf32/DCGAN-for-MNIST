@@ -15,24 +15,16 @@ Implementation of DCGAN.
 GENERATOR_SCOPE = 'generator'
 DISCRIMINATOR_SCOPE = 'discriminator'
 
-def access_data(is_local=True):
-
-    # Downloads data into ~/.keras/datasets/mnist.npz, if its not there.
-    # Raw data is a tuple of np arrays ((x_train, y_train), (x_test, y_test))
-    if is_local:
-        mnist = tf.keras.datasets.mnist.load_data()
-        x_train, x_test = mnist[0][0], mnist[1][0]
-        return x_train, x_test
-    else:
-        f = StringIO(file_io.read_file_to_string('gs://gan-training-207705_bucket2/mnist.npz'))
-        mnist = np.load(f)  
-        x_train, x_test = mnist['x_train'], mnist['x_test']
-        return x_train, x_test
+def access_data(config):
+    f = StringIO(file_io.read_file_to_string(config.data_dir))
+    mnist = np.load(f)  
+    x_train, x_test = mnist['x_train'], mnist['x_test']
+    return x_train, x_test
 
 
-def load_data():
+def load_data(config):
 
-    x_train, x_test = access_data()
+    x_train, x_test = access_data(config)
 
     # We do not need the labels, so we will gather all examples x.
     # Return a numpy array of shape (M, 28, 28)
@@ -41,7 +33,6 @@ def load_data():
     x_all = np.zeros((M, 28, 28))
     x_all[:num_train, :, :] = x_train
     x_all[num_train:, :, :] = x_test
-    print("finished load_data!")
     return x_all
 
 
@@ -63,12 +54,11 @@ def data_tensor(numpy_data):
     # We do this to match the range of tanh, the activation on the generator's output layer.
     X = X / 128.
     X = X - 1.
-    print("finished data_tensor!")
     return X
 
 
-def load_dataset():
-    numpy_data = load_data()
+def load_dataset(config):
+    numpy_data = load_data(config)
     np.random.shuffle(numpy_data)
 
     batch_size = 128
@@ -77,7 +67,6 @@ def load_dataset():
     X = data_tensor(numpy_data)
     dataset = tf.data.Dataset.from_tensor_slices(X)
     dataset = dataset.batch(batch_size)
-    print "finished load_dataset()!"
     return dataset, num_batches
 
 
@@ -289,10 +278,10 @@ def create_training_ops():
 
 def train(sess, ops, config):
     
-    writer = tf.summary.FileWriter(config.event_filename, graph=tf.get_default_graph())
+    writer = tf.summary.FileWriter(config.summary_dir, graph=tf.get_default_graph())
 
     # prepare data
-    dataset, num_batches = load_dataset()
+    dataset, num_batches = load_dataset(config)
     iterator = dataset.make_initializable_iterator()
     next_batch = iterator.get_next()
 
@@ -305,11 +294,9 @@ def train(sess, ops, config):
     # loop over epochs
     while epoch < config.num_epochs:
         sess.run(iterator.initializer)
-        print("starting epoch loop! " + str(epoch))
 
         # loop over batches
         while batch < num_batches:
-            print("starting batch loop! " + str(batch))
 
             # inputs
             images = sess.run(next_batch)
@@ -368,8 +355,6 @@ def load_session(config):
     ops.populate(sess)
     return sess, ops
 
-
-
 def continue_training(config):
     sess, ops = load_session(config)
     train(sess, ops, config)    
@@ -388,7 +373,7 @@ def sample(config):
     for i in range(images.shape[0]):
         image = images[i]
         img_tensor = tf.image.encode_png(image)
-        img_name = 'samples/sample_' + str(i) + '.png'
+        img_name = config.sample_dir + '/sample_' + str(i) + '.png'
         output_file = open(img_name, 'wb+')
         output_data = sess.run(img_tensor)
         output_file.write(output_data)
@@ -398,8 +383,7 @@ def sample(config):
 # Main
 def main(_):
     # parse arguments
-    config = TrainConfig()
-    config.populate()
+    config = TrainConfig(local=True)
     
     # train
     if config.should_continue:
