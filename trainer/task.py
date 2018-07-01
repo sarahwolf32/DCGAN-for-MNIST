@@ -15,7 +15,7 @@ Implementation of DCGAN.
 GENERATOR_SCOPE = 'generator'
 DISCRIMINATOR_SCOPE = 'discriminator'
 
-def access_data(is_local=False):
+def access_data(is_local=True):
 
     # Downloads data into ~/.keras/datasets/mnist.npz, if its not there.
     # Raw data is a tuple of np arrays ((x_train, y_train), (x_test, y_test))
@@ -353,55 +353,47 @@ def begin_training(config):
     ops.populate(sess)
     train(sess, ops, config)
 
+def load_session(config):
+    sess = tf.Session()
+
+    # load stored graph into current graph
+    graph_filename = str(tf.train.latest_checkpoint(config.checkpoint_dir)) + '.meta'
+    saver = tf.train.import_meta_graph(graph_filename)
+
+    # restore variables into graph
+    saver.restore(sess, tf.train.latest_checkpoint(config.checkpoint_dir))
+        
+    # load operations 
+    ops = TrainOps()
+    ops.populate(sess)
+    return sess, ops
+
+
 
 def continue_training(config):
-    with tf.Session() as sess:
-
-        # load stored graph into current graph
-        graph_filename = str(tf.train.latest_checkpoint(config.checkpoint_dir)) + '.meta'
-        saver = tf.train.import_meta_graph(graph_filename)
-
-         # restore variables into graph
-        saver.restore(sess, tf.train.latest_checkpoint(config.checkpoint_dir))
-        
-        # load operations 
-        ops = TrainOps()
-        ops.populate(sess)
-
-        # train
-        train(sess, ops, config)
-    
+    sess, ops = load_session(config)
+    train(sess, ops, config)    
 
 def sample(config):
+    sess, ops = load_session(config)
     num_samples = int(config.sample)
     Z = np.random.normal(0.0, 1.0, size=[num_samples, 1, 1, 100])
 
-    with tf.Session() as sess:
+    # get images
+    images = sess.run(ops.generated_images, feed_dict={'z_holder:0': Z})
+    images = images + 1.
+    images = images * 128.
 
-        # load stored graph into current graph
-        graph_filename = str(tf.train.latest_checkpoint(config.checkpoint_dir)) + '.meta'
-        saver = tf.train.import_meta_graph(graph_filename)
-
-        # restore variables into graph
-        saver.restore(sess, tf.train.latest_checkpoint(config.checkpoint_dir))
-        
-        # load operations 
-        ops = TrainOps()
-        ops.populate(sess)
-
-        # sample
-        images = sess.run(ops.generated_images, feed_dict={'z_holder:0': Z})
-        images = images + 1.
-        images = images * 128.
-        for i in range(images.shape[0]):
-            image = images[i]
-            img_tensor = tf.image.encode_png(image)
-            img_name = 'samples/sample_' + str(i) + '.png'
-            output_file = open(img_name, 'wb+')
-            output_data = sess.run(img_tensor)
-            output_file.write(output_data)
-            output_file.close()
-
+    # write to disk
+    for i in range(images.shape[0]):
+        image = images[i]
+        img_tensor = tf.image.encode_png(image)
+        img_name = 'samples/sample_' + str(i) + '.png'
+        output_file = open(img_name, 'wb+')
+        output_data = sess.run(img_tensor)
+        output_file.write(output_data)
+        output_file.close()
+    
 
 # Main
 def main(_):

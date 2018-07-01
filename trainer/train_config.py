@@ -16,8 +16,10 @@ class TrainConfig:
     def _populate_from_args(self, args):
 
         # logging
-        self.job_dir = args.job_dir or 'gs://gan-training-207705_bucket2/output2'
-        self.event_filename = 'gs://gan-training-207705_bucket2/output2/summary'
+        #self.job_dir = args.job_dir or 'gs://gan-training-207705_bucket2/output2'
+        #self.event_filename = 'gs://gan-training-207705_bucket2/output2/summary'
+        self.job_dir = ''
+        self.event_filename = 'summary'
         self.log_freq = args.log_freq or 1
 
         # training
@@ -26,8 +28,8 @@ class TrainConfig:
 
         # saving/restoring
         self.should_continue = args.continue_train or False
-        self.checkpoint_dir = 'gs://gan-training-207705_bucket2/output2/checkpoints'
-        #self.checkpoint_dir = 'output'
+        #self.checkpoint_dir = 'gs://gan-training-207705_bucket2/output2/checkpoints'
+        self.checkpoint_dir = 'output'
         self.checkpoint_freq = 5
 
         # sampling
