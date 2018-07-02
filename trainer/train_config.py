@@ -2,8 +2,6 @@ import argparse
 
 class TrainConfig:
 
-    # python DCGAN.py --event-file-dir test_1
-
     class Defaults:
         
         def __init__(self, local):
@@ -61,4 +59,6 @@ class TrainConfig:
         self.checkpoint_freq = args.checkpoint_freq or defaults.CHECKPOINT_FREQ
         self.should_continue = args.continue_train or False
         self.sample = args.sample or 0
+        self.batch_size = args.batch_size or defaults.BATCH_SIZE
+        
 

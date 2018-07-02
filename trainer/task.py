@@ -61,7 +61,7 @@ def load_dataset(config):
     numpy_data = load_data(config)
     np.random.shuffle(numpy_data)
 
-    batch_size = 128
+    batch_size = config.batch_size
     num_batches = int(np.ceil(numpy_data.shape[0] / float(batch_size)))
 
     X = data_tensor(numpy_data)
