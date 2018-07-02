@@ -44,7 +44,7 @@ The authors found the following architecture changes to be important for success
 * LeakyReLU activation in the discriminator for all layers, with a leak-slope of 0.2.
 * They used the Adam optimizer, with the momentum parameter B1 set to 0.5, and a learning rate of 0.0002. 
 
-This implementation uses all of the above, with the exception that it also uses LeakyReLU in the generator. 
+This implementation uses all of the above, with the exception that it uses LeakyReLU in the generator, and no fully connected layers at all.
 
 ## Results
 
@@ -64,10 +64,15 @@ If you want to store the trained model somewhere else, just include ```--checkpo
 
 If you want to output the samples to another location, just include ```--sample-dir [YOUR_PATH]``` in the command.
 
+## Next Steps
+
+The first few architectures I tried for this project had all of the DCGAN recommendations, but were much smaller, and suffered from mode collapse pretty quickly out of the gate. Mode collapse occurs when the generator starts outputting only one image over and over, and is one of the most common ways for GANs to fail. 
+
+This architecture is the first one I tried that did work, and I'm going to leave it at this for now. However, I suspect that this architecture may be a bit bigger than it needs to be. All else being equal, a simpler model that can achieve the same results is always preferable. If I come back to this project in the future, I want to try going down to four layers instead of five, and try other techniques to stabilize it if there are issues.
+
 ## Acknowledgements
 
-This code was inspired by the following implementations:
-* [Arthur Juiliani's DCGAN Tutorial](https://gist.github.com/awjuliani/8ebf356d03ffee139659807be7fa2611#file-dcgan-ipynb)
+The architecture that actually ended up working was based on this [excellent comparison of GANs and DCGANs](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN/) by Hyeonwoo Kang. 
 
 
 
