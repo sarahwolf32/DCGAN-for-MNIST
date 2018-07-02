@@ -52,16 +52,7 @@ The generator started producing convincing samples after about 8 epochs.
 
 Generated Digits:
 
-<img src='trainer/trained_examples/zero.png'>
-<img src='trainer/trained_examples/one.png'>
-<img src='trainer/trained_examples/two.png'>
-<img src='trainer/trained_examples/three.png'>
-<img src='trainer/trained_examples/four.png'>
-<img src='trainer/trained_examples/five.png'>
-<img src='trainer/trained_examples/six.png'>
-<img src='trainer/trained_examples/seven.png'>
-<img src='trainer/trained_examples/eight.png'>
-<img src='trainer/trained_examples/nine.png'>
+<img src='trainer/trained_examples/zero.png'> <img src='trainer/trained_examples/one.png'> <img src='trainer/trained_examples/two.png'> <img src='trainer/trained_examples/three.png'> <img src='trainer/trained_examples/four.png'> <img src='trainer/trained_examples/five.png'> <img src='trainer/trained_examples/six.png'> <img src='trainer/trained_examples/seven.png'> <img src='trainer/trained_examples/eight.png'> <img src='trainer/trained_examples/nine.png'>
 
 
 ## Trained Model
