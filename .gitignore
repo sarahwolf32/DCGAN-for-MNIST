@@ -1,4 +1,3 @@
 *.pyc
 trainer/summary
-MNIST-trained-model
 notes

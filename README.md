@@ -73,6 +73,25 @@ If you want to store the trained model somewhere else, just include ```--checkpo
 
 If you want to output the samples to another location, just include ```--sample-dir [YOUR_PATH]``` in the command.
 
+## Train Your Own
+
+If you want to tweak this code and train your own version from scratch, you will need to:
+
+1. Download the MNIST data here.
+2. cd into the project directory
+3. Run ```python -m trainer.task --data-dir [YOUR_PATH_TO_MNIST_DATA]```
+
+The checkpoint models will written to the MNIST-trained-model folder by default, but you can write to another location by including ```--checkpoint-dir [YOUR_CHECKPOINT_PATH]```.
+
+The event file for Tensorboard will be written to trainer/summary by default, but you can write them to another location by including ```--log-dir [YOUR_LOG_DIR_PATH]```
+
+To view training progress in Tensorboard, run ```tensorboard --log-dir=[YOUR_LOG_DIR_PATH]```, and then open ```localhost:6006```.
+
+Check out trainer/train_config.py for other optional settings. 
+
+If you need to stop and re-start training, you can continue training from a checkpoint saved in the MNIST-trained-model folder with the ```--continue-train True``` flag.
+
+
 ## Next Steps
 
 The first few architectures I tried for this project had all of the DCGAN recommendations, but were much smaller, and suffered from mode collapse pretty quickly out of the gate. Mode collapse occurs when the generator starts outputting only one image over and over, and is one of the most common ways for GANs to fail. 
