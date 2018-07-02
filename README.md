@@ -77,7 +77,7 @@ If you want to output the samples to another location, just include ```--sample-
 
 If you want to tweak this code and train your own version from scratch, you will need to:
 
-1. Download the MNIST data here.
+1. Download the MNIST data [here](https://storage.googleapis.com/gan-training-207705-public-bucket/mnist.npz).
 2. cd into the project directory
 3. Run ```python -m trainer.task --data-dir [YOUR_PATH_TO_MNIST_DATA]```
 
