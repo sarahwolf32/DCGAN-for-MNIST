@@ -52,11 +52,15 @@ The generator started producing convincing samples after about 8 epochs.
 
 Generated digits:
 
-<img src='trainer/trained_examples/zero.png'> <img src='trainer/trained_examples/one.png'> <img src='trainer/trained_examples/two.png'> <img src='trainer/trained_examples/three.png'> <img src='trainer/trained_examples/four.png'> <img src='trainer/trained_examples/five.png'> <img src='trainer/trained_examples/six.png'> <img src='trainer/trained_examples/seven.png'> <img src='trainer/trained_examples/eight.png'> <img src='trainer/trained_examples/nine.png'>
+<img src='trained_examples/zero.png'> <img src='trained_examples/one.png'> <img src='trained_examples/two.png'> <img src='trained_examples/three.png'> <img src='trained_examples/four.png'> <img src='trained_examples/five.png'> <img src='trained_examples/six.png'> <img src='trained_examples/seven.png'> <img src='trained_examples/eight.png'> <img src='trained_examples/nine.png'>
 
-<img src='trainer/trained_examples/zero1.png'> <img src='trainer/trained_examples/one1.png'> <img src='trainer/trained_examples/two1.png'> <img src='trainer/trained_examples/three1.png'> <img src='trainer/trained_examples/four1.png'> <img src='trainer/trained_examples/five1.png'> <img src='trainer/trained_examples/six1.png'> <img src='trainer/trained_examples/seven1.png'> <img src='trainer/trained_examples/eight1.png'> <img src='trainer/trained_examples/nine1.png'>
+<img src='trained_examples/zero1.png'> <img src='trained_examples/one1.png'> <img src='trained_examples/two1.png'> <img src='trained_examples/three1.png'> <img src='trained_examples/four1.png'> <img src='trained_examples/five1.png'> <img src='trained_examples/six1.png'> <img src='trained_examples/seven1.png'> <img src='trained_examples/eight1.png'> <img src='trained_examples/nine1.png'>
 
-<img src='trainer/trained_examples/zero2.png'> <img src='trainer/trained_examples/one2.png'> <img src='trainer/trained_examples/two2.png'> <img src='trainer/trained_examples/three2.png'> <img src='trainer/trained_examples/four2.png'> <img src='trainer/trained_examples/five2.png'> <img src='trainer/trained_examples/six2.png'> <img src='trainer/trained_examples/seven2.png'> <img src='trainer/trained_examples/eight2.png'> <img src='trainer/trained_examples/nine2.png'>
+<img src='trained_examples/zero2.png'> <img src='trained_examples/one2.png'> <img src='trained_examples/two2.png'> <img src='trained_examples/three2.png'> <img src='trained_examples/four2.png'> <img src='trained_examples/five2.png'> <img src='trained_examples/six2.png'> <img src='trained_examples/seven2.png'> <img src='trained_examples/eight2.png'> <img src='trained_examples/nine2.png'>
+
+MNIST training digits:
+
+<img src='mnist_examples/zero.png'> <img src='mnist_examples/one.png'> <img src='mnist_examples/two.png'> <img src='mnist_examples/three.png'> <img src='mnist_examples/four.png'> <img src='mnist_examples/five.png'> <img src='mnist_examples/six.png'> <img src='mnist_examples/seven.png'> <img src='mnist_examples/eight.png'> <img src='mnist_examples/nine.png'>
 
 
 ## Trained Model
