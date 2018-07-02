@@ -50,6 +50,20 @@ This implementation uses all of the above, with the exception that it uses Leaky
 
 The generator started producing convincing samples after about 8 epochs. 
 
+Generated Digits:
+
+<img src='trainer/trained_examples/zero.png'>
+<img src='trainer/trained_examples/one.png'>
+<img src='trainer/trained_examples/two.png'>
+<img src='trainer/trained_examples/three.png'>
+<img src='trainer/trained_examples/four.png'>
+<img src='trainer/trained_examples/five.png'>
+<img src='trainer/trained_examples/six.png'>
+<img src='trainer/trained_examples/seven.png'>
+<img src='trainer/trained_examples/eight.png'>
+<img src='trainer/trained_examples/nine.png'>
+
+
 ## Trained Model
 
 You can download the trained model [here](https://storage.googleapis.com/gan-training-207705-public-bucket/MNIST-DCGAN-model-1.zip).
