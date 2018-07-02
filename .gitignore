@@ -1,4 +1,4 @@
 *.pyc
 trainer/summary
-trainer/output
+trainer/MNIST-trained-model
 notes

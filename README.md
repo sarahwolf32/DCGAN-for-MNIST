@@ -55,7 +55,7 @@ The generator started producing convincing samples after about 8 epochs.
 You can download the trained model [here](https://storage.googleapis.com/gan-training-207705-public-bucket/MNIST-DCGAN-model-1.zip).
 
 To pull generated samples from this model:
-1. Unzip it, and drag the contents into the trainer/output folder
+1. Unzip the model, and drag it into the ```trainer``` folder
 2. cd into the project directory
 3. Run ```python -m trainer.task --sample [NUMBER_OF_SAMPLES_TO_OUTPUT]```
 4. You can find the resulting images in the trainer/samples folder. 
