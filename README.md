@@ -10,23 +10,23 @@ This is exciting for several reasons. On a practical level, there is far more un
 
 However, early GANs proved to be very difficult to train, especially with complex data like images. In an effort to overcome this, the authors of this paper introduced DCGAN, a GAN specialized for images. From extensive model exploration, they found a set of architectures that work well for image generation.
 
-## How do DCGANs work?
+## How do GANs work?
 
-A DCGAN pits two models against each other - a 'Generator' (G), that takes a random code and outputs a generated image, and a 'Discriminator' (D), that attempts to distinguish the real training images from the generated ones. 
+A GAN pits two models against each other - a 'Generator' (<i>G</i>), that takes a random code and outputs a generated image, and a 'Discriminator' (<i>D</i>), that attempts to distinguish the real training images from the generated ones. 
 
 Let's define some terms:
 
-x(i) = real training example
+<i>x<sub>i</sub></i> = <i>i<sup>th</sup></i> real training example
 
-z(i) = randomly generated code
+<i>z<sub>i</sub></i> = <i>i<sup>th</sup></i> randomly generated code
 
-G(z(i)) = output of G, an image generated from z(i)
+<i>G(z<sub>i</sub>)</i> = output of <i>G</i>, an image generated from <i>z<sub>i</sub></i>
 
-D(x(i)) = output of D when fed the real training example, the probability it gives the real example of being real. D wants this to be as high as possible. 
+<i>D(x<sub>i</sub>)</i> = output of <i>D</i> when fed the real training example, the probability it gives the real example of being real. D wants this to be as high as possible. 
 
-D(G(z(i))) = output of D when fed the generated example, the probability it gives the fake example of being real. D wants this to be as low as possible, while G wants it to be as high as possible.
+<i>D(G(z<sub>i</sub>))</i> = output of <i>D</i> when fed the generated example, the probability it gives the fake example of being real. <i>D</i> wants this to be as low as possible, while <i>G</i> wants it to be as high as possible.
 
-## The Cost Function
+## The Cost Function(s)
 
 <img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{D}&space;=&space;-\frac{1}{m}&space;\sum_{i=1}^{m}&space;log(D(x_{i}))&space;&plus;&space;log(1&space;-&space;D(G(z_{i})))" height="70"/>
 
@@ -36,7 +36,7 @@ D(G(z(i))) = output of D when fed the generated example, the probability it give
 
 ## Architectures for Generating Images
 
-The authors found the following architecture changes to be important for successful training:
+The authors of the DCGAN paper found the following architecture changes to be important for successful training:
 
 * All-convolutional nets, with no spatial pooling functions such as maxpool.
 * They eliminated the fully connected layers often placed on top of convolutional layers. Only the input and output layers are not convolutional.
