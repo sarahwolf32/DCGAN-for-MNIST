@@ -28,10 +28,10 @@ D(G(z(i))) = output of D when fed the generated example, the probability it give
 
 ## The Cost Function
 
-<img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{D}&space;=&space;-\frac{1}{m}&space;\sum_{i=1}^{m}&space;log(D(x_{i}))&space;&plus;&space;log(1&space;-&space;D(G(z_{i})))" height="50"/>
+<img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{D}&space;=&space;-\frac{1}{m}&space;\sum_{i=1}^{m}&space;log(D(x_{i}))&space;&plus;&space;log(1&space;-&space;D(G(z_{i})))" height="70"/>
 
 
-<img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{G}&space;=&space;\frac{1}{m}&space;\sum_{i&space;=&space;1}^{m}&space;log(1&space;-&space;D(G(z_{i})))" height="50"/>
+<img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{G}&space;=&space;\frac{1}{m}&space;\sum_{i&space;=&space;1}^{m}&space;log(1&space;-&space;D(G(z_{i})))" height="70"/>
 
 
 ## Architectures for Generating Images
