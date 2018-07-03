@@ -79,7 +79,7 @@ If you want to output the samples to another location, just include ```--sample-
 
 ## Train Your Own
 
-If you want to tweak this code and train your own version from scratch, you will need to:
+If you want to tweak this code and train your own version from scratch, you can find the main code in trainer/task.py. To train, you will need to:
 
 1. Download the MNIST data [here](https://storage.googleapis.com/gan-training-207705-public-bucket/mnist.npz).
 2. cd into the project directory
