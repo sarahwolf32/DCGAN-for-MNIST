@@ -39,15 +39,15 @@ def load_data(config):
 def data_tensor(numpy_data):
     '''
     numpy_data: (M, 28, 28), values in range [0, 255]
-    returns: tensor of images shaped [M, 64, 64, 1], with values in range [-1, 1]
+    returns: tensor of images shaped [M, 32, 32, 1], with values in range [-1, 1]
     '''
 
     # Turn numpy array into a tensor X of shape [M, 28, 28, 1].
     X = tf.constant(numpy_data)
     X = tf.reshape(X, [-1, 28, 28, 1])
 
-    # resize images to 64x64
-    X = tf.image.resize_images(X, [64, 64])
+    # resize images to 32x32
+    X = tf.image.resize_images(X, [32, 32])
 
     # The data is currently in a range [0, 255].
     # Transform data to have a range [-1, 1].
@@ -73,15 +73,15 @@ def load_dataset(config):
 def generator(Z, initializer):
     '''
     Takes an argument Z, an [M, 1, 1, 100] tensor of random numbers.
-    Returns an operation that creates a generated image of shape [None, 64, 64, 1]
+    Returns an operation that creates a generated image of shape [None, 32, 32, 1]
     '''
 
     with tf.variable_scope(GENERATOR_SCOPE):
 
-        # Layer 1
+        # Layer 1 -> [None, 4, 4, 512]
         deconv_1 = tf.layers.conv2d_transpose(
             Z, 
-            filters=1024, 
+            filters=512, 
             kernel_size=[4,4], 
             strides=[1,1], 
             padding='valid',
@@ -90,10 +90,10 @@ def generator(Z, initializer):
         norm_1 = tf.layers.batch_normalization(deconv_1)
         lrelu_1 = tf.nn.leaky_relu(norm_1)
 
-        # Layer 2
+        # Layer 2 -> [None, 8, 8, 256]
         deconv_2 = tf.layers.conv2d_transpose(
             lrelu_1, 
-            filters=512, 
+            filters=256, 
             kernel_size=[4,4], 
             strides=[2,2], 
             padding='same', 
@@ -102,10 +102,10 @@ def generator(Z, initializer):
         norm_2 = tf.layers.batch_normalization(deconv_2)
         lrelu_2 = tf.nn.leaky_relu(norm_2)
 
-        # Layer 3
+        # Layer 3 -> [None, 16, 16, 128]
         deconv_3 = tf.layers.conv2d_transpose(
             lrelu_2,
-            filters=256, 
+            filters=128, 
             kernel_size=[4,4], 
             strides=[2,2], 
             padding='same', 
@@ -114,44 +114,32 @@ def generator(Z, initializer):
         norm_3 = tf.layers.batch_normalization(deconv_3)
         lrelu_3 = tf.nn.leaky_relu(norm_3)
 
-        # Layer 4
+        # Layer 4 -> [None, 32, 32, 1]
         deconv_4 = tf.layers.conv2d_transpose(
-            lrelu_3,
-            filters=128, 
-            kernel_size=[4,4], 
-            strides=[2,2], 
-            padding='same', 
-            kernel_initializer=initializer,
-            name='layer4')
-        norm_4 = tf.layers.batch_normalization(deconv_4)
-        lrelu_4 = tf.nn.leaky_relu(norm_4)
-
-        # Output Layer
-        deconv_5 = tf.layers.conv2d_transpose(
-            lrelu_4, 
+            lrelu_3, 
             filters=1,
             kernel_size=[4,4],
             strides=[2,2],
             padding='same',
             activation=tf.nn.tanh,
             kernel_initializer=initializer,
-            name='layer5')
-        output = tf.identity(deconv_5, name='generated_images')
+            name='layer4')
+        output = tf.identity(deconv_4, name='generated_images')
 
-        # Generated images of shape [M, 64, 64, 1]
+        # Generated images of shape [M, 32, 32, 1]
         return output
 
 
 # Discriminator
 def discriminator(images, initializer, reuse=False):
     '''
-    Takes an image as an argument [None, 64, 64, 1].
+    Takes an image as an argument [None, 32, 32, 1].
     Returns an operation that gives the probability of that image being 'real' [None, 1]
     '''
 
     with tf.variable_scope(DISCRIMINATOR_SCOPE, reuse=reuse):
 
-        # Layer 1 
+        # Layer 1 -> [None, 16, 16, 128]
         conv_1 = tf.layers.conv2d(
             images, 
             filters=128, 
@@ -162,7 +150,7 @@ def discriminator(images, initializer, reuse=False):
             kernel_initializer=initializer, 
             name='layer1')
 
-        # Layer 2 
+        # Layer 2 -> [None, 8, 8, 256]
         conv_2 = tf.layers.conv2d(
             conv_1, 
             filters=256, 
@@ -174,7 +162,7 @@ def discriminator(images, initializer, reuse=False):
         norm_2 = tf.layers.batch_normalization(conv_2)
         lrelu_2 = tf.nn.leaky_relu(norm_2)
 
-        # Layer 3 
+        # Layer 3  -> [None, 4, 4, 512]
         conv_3 = tf.layers.conv2d(
             lrelu_2, 
             filters=512, 
@@ -186,22 +174,10 @@ def discriminator(images, initializer, reuse=False):
         norm_3 = tf.layers.batch_normalization(conv_3)
         lrelu_3 = tf.nn.leaky_relu(norm_3)
 
-        # Layer 4
-        conv_4 = tf.layers.conv2d(
-            lrelu_3, 
-            filters=1024, 
-            kernel_size=[4,4], 
-            strides=[2,2], 
-            padding='same', 
-            kernel_initializer=initializer, 
-            name='layer4')
-        norm_4 = tf.layers.batch_normalization(conv_4)
-        lrelu_4 = tf.nn.leaky_relu(norm_4)
-
-        # Layer 5
-        conv_5 = tf.layers.conv2d(lrelu_4, filters=1, kernel_size=[4,4], strides=[1,1], padding='valid')
-        sigmoid_5 = tf.nn.sigmoid(conv_5)
-        output = tf.reshape(sigmoid_5, [-1, 1])
+        # Layer 5 -> [None, 1, 1, 1]
+        conv_4 = tf.layers.conv2d(lrelu_3, filters=1, kernel_size=[4,4], strides=[1,1], padding='valid')
+        sigmoid_4 = tf.nn.sigmoid(conv_4)
+        output = tf.reshape(sigmoid_4, [-1, 1])
 
         return output
 
@@ -257,7 +233,7 @@ def save_model(checkpoint_dir, session, step, saver):
 def create_training_ops():
 
     # create a placeholders
-    images_holder = tf.placeholder(tf.float32, shape=[None, 64, 64, 1], name='images_holder')
+    images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1], name='images_holder')
     Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers

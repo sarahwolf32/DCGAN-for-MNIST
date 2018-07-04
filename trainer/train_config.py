@@ -39,6 +39,7 @@ class TrainConfig:
         parser.add_argument('--log-freq', help='Prints the losses and writes Tensorboard summary data every n steps')
         parser.add_argument('--num-epochs', help='number of epochs to train')
         parser.add_argument('--checkpoint-freq', help='Saves partial training progress as checkpoint every n steps')
+        parser.add_argument('--batch-size', help='The batch size to train with')
 
         # use-cases
         parser.add_argument('--continue-train', help='continue training where we left off')
