@@ -5,7 +5,7 @@ class TrainConfig:
     class Defaults:
         
         def __init__(self, local):
-            self.NUM_EPOCHS = 10
+            self.NUM_EPOCHS = 13
             self.BATCH_SIZE = 128
             self.LOG_FREQ = 1
             self.CHECKPOINT_FREQ = 5
@@ -16,11 +16,11 @@ class TrainConfig:
                 self.CHECKPOINT_DIR = 'MNIST-trained-model'
                 self.SAMPLE_DIR = 'trainer/samples'
             else:
-                CGP_BUCKET = 'gs://gan-training-207705_bucket2'
-                self.DATA_DIR = GCP_BUCKET + '/mnist.npz'
-                self.SUMMARY_DIR = GCP_BUCKET + '/output2/summary'
-                self.CHECKPOINT_DIR = GCP_BUCKET + '/output2/checkpoints'
-                self.SAMPLES_DIR = GCP_BUCKET + '/output2/samples'
+                #self.CGP_BUCKET = 'gs://gan-training-207705_bucket2'
+                self.DATA_DIR = 'gs://gan-training-207705_bucket2/mnist.npz'
+                self.SUMMARY_DIR = 'gs://gan-training-207705_bucket2/output3/summary'
+                self.CHECKPOINT_DIR = 'gs://gan-training-207705_bucket2/output3/checkpoints'
+                self.SAMPLE_DIR = 'gs://gan-training-207705_bucket2/output3/samples'
 
     def __init__(self, local=True):
         args = self._add_arguments()
