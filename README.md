@@ -52,11 +52,11 @@ The generator started producing convincing samples after about 8 epochs.
 
 Generated digits:
 
-<img src='trained_examples/zero.png'> <img src='trained_examples/one.png'> <img src='trained_examples/two.png'> <img src='trained_examples/three.png'> <img src='trained_examples/four.png'> <img src='trained_examples/five.png'> <img src='trained_examples/six.png'> <img src='trained_examples/seven.png'> <img src='trained_examples/eight.png'> <img src='trained_examples/nine.png'>
+<img src='trained_examples/zero_0.png'> <img src='trained_examples/one_0.png'> <img src='trained_examples/two_0.png'> <img src='trained_examples/three_0.png'> <img src='trained_examples/four_0.png'> <img src='trained_examples/five_0.png'> <img src='trained_examples/six_0.png'> <img src='trained_examples/seven_0.png'> <img src='trained_examples/eight_0.png'> <img src='trained_examples/nine_0.png'>
 
-<img src='trained_examples/zero1.png'> <img src='trained_examples/one1.png'> <img src='trained_examples/two1.png'> <img src='trained_examples/three1.png'> <img src='trained_examples/four1.png'> <img src='trained_examples/five1.png'> <img src='trained_examples/six1.png'> <img src='trained_examples/seven1.png'> <img src='trained_examples/eight1.png'> <img src='trained_examples/nine1.png'>
+<img src='trained_examples/zero_1.png'> <img src='trained_examples/one_1.png'> <img src='trained_examples/two_1.png'> <img src='trained_examples/three_1.png'> <img src='trained_examples/four_1.png'> <img src='trained_examples/five_1.png'> <img src='trained_examples/six_1.png'> <img src='trained_examples/seven_1.png'> <img src='trained_examples/eight_1.png'> <img src='trained_examples/nine_1.png'>
 
-<img src='trained_examples/zero2.png'> <img src='trained_examples/one2.png'> <img src='trained_examples/two2.png'> <img src='trained_examples/three2.png'> <img src='trained_examples/four2.png'> <img src='trained_examples/five2.png'> <img src='trained_examples/six2.png'> <img src='trained_examples/seven2.png'> <img src='trained_examples/eight2.png'> <img src='trained_examples/nine2.png'>
+<img src='trained_examples/zero_2.png'> <img src='trained_examples/one_2.png'> <img src='trained_examples/two_2.png'> <img src='trained_examples/three_2.png'> <img src='trained_examples/four_2.png'> <img src='trained_examples/five_2.png'> <img src='trained_examples/six_2.png'> <img src='trained_examples/seven_2.png'> <img src='trained_examples/eight_2.png'> <img src='trained_examples/nine_2.png'>
 
 MNIST training digits:
 
