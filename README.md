@@ -65,7 +65,7 @@ MNIST training digits:
 
 ## Trained Model
 
-You can download the trained model [here](https://storage.googleapis.com/gan-training-207705-public-bucket/MNIST-DCGAN-model-1.zip).
+You can download the trained model [here](https://storage.googleapis.com/gan-training-207705-public-bucket/MNIST-DCGAN-model-2.zip).
 
 To pull generated samples from this model:
 1. Unzip the model, and drag it into the project directory
