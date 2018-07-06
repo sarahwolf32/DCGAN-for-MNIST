@@ -8,7 +8,7 @@ This is an implementation of an unsupervised DCGAN on the MNIST dataset of hand-
 
 This is exciting for several reasons. On a practical level, there is far more unlabeled data in the world than there is labeled data. For researchers, it is exciting because it is an example of unsupervised learning. Learning useful representations of unlabeled data has many applications, and as Richard Feynman famously said, "What I cannot create, I do not understand". 
 
-However, early GANs proved to be very difficult to train, especially with complex data like images. In an effort to overcome this, the authors of this paper introduced DCGAN, a GAN specialized for images. From extensive model exploration, they found a set of architectures that work well for image generation.
+However, early GANs proved to be very difficult to train, especially with complex data like images. In an effort to overcome this, the authors of this paper introduced DCGAN, a class of GANs specialized for images. From extensive model exploration, they found a set of architectures that work well for image generation.
 
 ## How do GANs work?
 
@@ -27,6 +27,8 @@ Let's define some terms:
 <i>D(G(z<sub>i</sub>))</i> = output of <i>D</i> when fed the generated example, the probability it gives the fake example of being real. <i>D</i> wants this to be as low as possible, while <i>G</i> wants it to be as high as possible.
 
 ## The Cost Function(s)
+
+The G and D networks each have their own loss function, which measures how well each is doing compared to the other. This is essentially a "zero sum game" - these loss functions do not tell us anything about how good the generated images are in any absolute sense, only how good they are relative to D's ability to distinguish them from the real thing. 
 
 <img src="https://latex.codecogs.com/png.latex?\dpi{300}&space;\large&space;Loss_{D}&space;=&space;-\frac{1}{m}&space;\sum_{i=1}^{m}&space;log(D(x_{i}))&space;&plus;&space;log(1&space;-&space;D(G(z_{i})))" height="70"/>
 
