@@ -1,6 +1,6 @@
 # DCGAN for MNIST
 
-This is an implementation of the paper ['Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks' by Radford, et al](https://arxiv.org/pdf/1511.06434.pdf) on the MNIST dataset of hand-written digits.
+This is an implementation of an unsupervised DCGAN on the MNIST dataset of hand-written digits, based on the excellent paper ['Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks'](https://arxiv.org/pdf/1511.06434.pdf) by Radford, et al.
 
 ## Background
 
@@ -98,9 +98,11 @@ If you need to stop and re-start training, you can continue training from a chec
 
 ## Acknowledgements
 
-The choice to drop the fully connected layers entirely was based on the architecture in this [excellent comparison of GANs and DCGANs](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN/) by Hyeonwoo Kang. 
+* ['Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks'](https://arxiv.org/pdf/1511.06434.pdf) by Radford, et al.
 
-I also used several tips from Utkarsh Desai's [helpful blog post](https://medium.com/@utk.is.here/keep-calm-and-train-a-gan-pitfalls-and-tips-on-training-generative-adversarial-networks-edd529764aa9) on GAN training tricks.
+* The choice to drop the fully connected layers entirely was based on the architecture in this [excellent comparison of GANs and DCGANs](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN/) by Hyeonwoo Kang. 
+
+* I also used several tips from Utkarsh Desai's [helpful blog post](https://medium.com/@utk.is.here/keep-calm-and-train-a-gan-pitfalls-and-tips-on-training-generative-adversarial-networks-edd529764aa9) on GAN training tricks.
 
 
 
