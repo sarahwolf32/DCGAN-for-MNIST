@@ -98,7 +98,9 @@ If you need to stop and re-start training, you can continue training from a chec
 
 ## Acknowledgements
 
-The architecture that actually ended up working was based on this [excellent comparison of GANs and DCGANs](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN/) by Hyeonwoo Kang. 
+The choice to drop the fully connected layers entirely was based on the architecture in this [excellent comparison of GANs and DCGANs](https://github.com/znxlwm/tensorflow-MNIST-GAN-DCGAN/) by Hyeonwoo Kang. 
+
+I also used several tips from Utkarsh Desai's [helpful blog post](https://medium.com/@utk.is.here/keep-calm-and-train-a-gan-pitfalls-and-tips-on-training-generative-adversarial-networks-edd529764aa9) on GAN training tricks.
 
 
 
