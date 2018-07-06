@@ -50,7 +50,7 @@ This implementation uses all of the above, with the exception that it uses Leaky
 
 ## Results
 
-The generator started producing convincing samples after about 8 epochs. 
+The generator started producing convincing samples after 12 epochs.
 
 Generated digits:
 
