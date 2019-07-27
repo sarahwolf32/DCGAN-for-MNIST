@@ -216,7 +216,7 @@ def trainers(images_holder, Z_holder):
     train_g = optimizer_g.minimize(loss_g, var_list=g_vars, name='train_g')
     train_d = optimizer_d.minimize(loss_d, var_list = d_vars, name='train_d')
 
-    return train_d, train_g, loss_d, loss_g, generated_images
+    return train_d, train_g, loss_d, loss_g, generated_images, Dx, Dg
 
 
 def save_model(checkpoint_dir, session, step, saver):
@@ -233,7 +233,7 @@ def create_training_ops():
     Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers
-    train_d, train_g, loss_d, loss_g, generated_images = trainers(images_holder, Z_holder)
+    train_d, train_g, loss_d, loss_g, generated_images, Dx, Dg = trainers(images_holder, Z_holder)
 
     # initialize variables
     global_step_var = tf.Variable(0, name='global_step')
@@ -243,8 +243,11 @@ def create_training_ops():
     # prepare summaries
     loss_d_summary_op = tf.summary.scalar('Discriminator_Loss', loss_d)
     loss_g_summary_op = tf.summary.scalar('Generator_Loss', loss_g)
-    images_summary_op = tf.summary.image('Generated_Image', generated_images, max_outputs=1)
-    training_images_summary_op = tf.summary.image('Training_Image', images_holder, max_outputs=1)
+    dx_summary_op = tf.summary.scalar('D(x)', tf.reduce_mean(Dx))
+    dg_summary_op = tf.summary.scalar('D(g)', tf.reduce_mean(Dg))
+
+    images_summary_op = tf.summary.image('Generated_Image', generated_images, max_outputs=3)
+    training_images_summary_op = tf.summary.image('Training_Image', images_holder, max_outputs=3)
     summary_op = tf.summary.merge_all()
 
 
