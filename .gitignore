@@ -3,3 +3,4 @@ trainer/summary
 notes
 mnist_png
 .DS_Store
+trainer.egg-info

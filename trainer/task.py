@@ -2,9 +2,10 @@ import tensorflow as tf
 import numpy as np
 import time
 import os
-from train_config import TrainConfig
-from train_ops import TrainOps
-from StringIO import StringIO
+import io
+from io import StringIO
+from .train_config import TrainConfig
+from .train_ops import TrainOps
 from tensorflow.python.lib.io import file_io
 
 '''
@@ -15,58 +16,53 @@ Implementation of DCGAN.
 GENERATOR_SCOPE = 'generator'
 DISCRIMINATOR_SCOPE = 'discriminator'
 
-def access_data(config):
-    f = StringIO(file_io.read_file_to_string(config.data_dir))
-    mnist = np.load(f)  
-    x_train, x_test = mnist['x_train'], mnist['x_test']
-    return x_train, x_test
 
-
-def load_data(config):
-
-    x_train, x_test = access_data(config)
-
-    # We do not need the labels, so we will gather all examples x.
-    # Return a numpy array of shape (M, 28, 28)
-    num_train, num_test = x_train.shape[0], x_test.shape[0]
-    M = num_train + num_test
-    x_all = np.zeros((M, 28, 28))
-    x_all[:num_train, :, :] = x_train
-    x_all[num_train:, :, :] = x_test
-    return x_all
-
-
-def data_tensor(numpy_data):
+def load_image(filepath):
+    '''Downloads image
+    
+    Args:
+        filepath: String, either a GCS address, or a local filepath
+    Returns:
+        Tensor of the image pixel values.
     '''
-    numpy_data: (M, 28, 28), values in range [0, 255]
-    returns: tensor of images shaped [M, 32, 32, 1], with values in range [-1, 1]
+    f = tf.read_file(filepath)
+    image = tf.image.decode_png(f, channels=1)
+    return image
+
+
+def scale_images_range(images):
+    '''Scales image values to range [-1, 1]
+    Args:
+        image: Tensor, of shape [M, H, W, 3], with values in range [0, 255]
+    Returns:
+        A tensor of shape [M, H, W, 3], with values in range [-1, 1]
     '''
-
-    # Turn numpy array into a tensor X of shape [M, 28, 28, 1].
-    X = tf.constant(numpy_data)
-    X = tf.reshape(X, [-1, 28, 28, 1])
-
-    # resize images to 32x32
-    X = tf.image.resize_images(X, [32, 32])
-
-    # The data is currently in a range [0, 255].
-    # Transform data to have a range [-1, 1].
-    # We do this to match the range of tanh, the activation on the generator's output layer.
-    X = X / 128.
-    X = X - 1.
-    return X
+    images = tf.cast(images, dtype=tf.float32)
+    images = images / 128.
+    images = images - 1.
+    return images
 
 
 def load_dataset(config):
-    numpy_data = load_data(config)
-    np.random.shuffle(numpy_data)
 
-    batch_size = config.batch_size
-    num_batches = int(np.ceil(numpy_data.shape[0] / float(batch_size)))
+    # find images
+    file_pattern = config.data_dir + "/*.png"
+    dataset = tf.data.Dataset.list_files(file_pattern, shuffle=True)
 
-    X = data_tensor(numpy_data)
-    dataset = tf.data.Dataset.from_tensor_slices(X)
-    dataset = dataset.batch(batch_size)
+    # load images
+    dataset = dataset.map(lambda filepath: load_image(filepath))
+
+    # split into batches
+    dataset = dataset.repeat()
+    dataset = dataset.batch(config.batch_size)
+
+    # scale images to range [-1, 1]
+    dataset = dataset.map(lambda images: scale_images_range(images))
+    
+    # compute num batches
+    num_images = len(os.listdir(config.data_dir)) - 1
+    num_batches = int(num_images / config.batch_size)
+
     return dataset, num_batches
 
 
@@ -233,7 +229,7 @@ def save_model(checkpoint_dir, session, step, saver):
 def create_training_ops():
 
     # create a placeholders
-    images_holder = tf.placeholder(tf.float32, shape=[None, 32, 32, 1], name='images_holder')
+    images_holder = tf.placeholder(tf.float32, shape=[None, 28, 28, 1], name='images_holder')
     Z_holder = tf.placeholder(tf.float32, shape=[None, 1, 1, 100], name='z_holder')
 
     # get trainers
